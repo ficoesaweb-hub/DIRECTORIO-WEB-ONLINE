@@ -1,6 +1,7 @@
-// Paste your Supabase project URL and publishable (anon) key below.
-// Never put your database password or service_role/secret key here.
+// Public Supabase configuration for FICOESA Creative Hub.
+// Never put a service_role key or database password in this file.
 window.FICOESA_CONFIG = {
-  url: 'https://REEMPLAZAR.supabase.co',
-  anonKey: 'REEMPLAZAR_CON_CLAVE_PUBLICABLE'
+  url: 'https://qllfnhhcmfvkjhactvah.supabase.co',
+  anonKey: 'sb_publishable_8YP92QFUGXOyPcaaLNG9JQ_7bGZfJAM'
 };
+window.SUPABASE_CONFIG = window.FICOESA_CONFIG;
