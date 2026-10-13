@@ -1,4 +1,13 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+<!doctype html><html><head><script>
+/* Portada FICOESA: la web principal muestra la intro; ?acceso=1 permite entrar al login sin bucle. */
+(function () {
+  var search = new URLSearchParams(window.location.search);
+  var authCallback = search.has('code') || search.has('token_hash') || /(?:^#|&)access_token=/.test(window.location.hash);
+  if (search.get('acceso') !== '1' && !authCallback) {
+    window.location.replace(new URL('./intro/', window.location.href).href);
+  }
+})();
+</script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
   /* Acceso privado: pagina completa centrada, independiente de la barra lateral */
   body.login-mode .app { display: block; min-height: 100vh; min-height: 100dvh; }
   body.login-mode .content { min-height: 100vh; min-height: 100dvh; padding: 0 clamp(18px, 4vw, 36px); display: flex; flex-direction: column; }
@@ -762,13 +771,13 @@
     return h + '</div></div>';
   }
   function stateGate() {
-    if (dbState === 'loading') return '<p class="empty"><b>Cargando el repositorio…</b>Un momento, estamos consultando las campañas guardadas.</p>';
-    if (dbState === 'nodb') return '<p class="empty"><b>No se puede acceder al repositorio desde esta vista.</b>Configura la URL y la clave pública de Supabase en supabase-config.js para activar las campañas.</p>';
+    if (dbState === 'loading') return '<p class="empty"><b>Cargando el directorio…</b>Un momento, estamos consultando las campañas guardadas.</p>';
+    if (dbState === 'nodb') return '<p class="empty"><b>No se puede acceder al directorio desde esta vista.</b>Configura la URL y la clave pública de Supabase en supabase-config.js para activar las campañas.</p>';
     if (dbState === 'error') return '<p class="empty"><b>No se han podido cargar las campañas.</b>Recarga la página. Si el problema continúa, avisa al administrador.</p>';
     return null;
   }
   function emptyRepo() {
-    return '<div class="empty"><b>Todavía no hay campañas en el repositorio.</b><span>' + (authState === 'admin' ? 'Crea la primera desde Administración y aparecerá automáticamente en el calendario y en el directorio.' : 'Cuando el equipo de marketing publique contenido, lo verás aquí.') + '</span>' + (authState === 'admin' ? '<button type="button" class="btn primary" data-act="nav" data-r="adm-nueva">' + ic('plus', 16) + 'Nueva campaña</button>' : '') + '</div>';
+    return '<div class="empty"><b>Todavía no hay campañas en el directorio.</b><span>' + (authState === 'admin' ? 'Crea la primera desde Administración y aparecerá automáticamente en el calendario y en el directorio.' : 'Cuando el equipo de marketing publique contenido, lo verás aquí.') + '</span>' + (authState === 'admin' ? '<button type="button" class="btn primary" data-act="nav" data-r="adm-nueva">' + ic('plus', 16) + 'Nueva campaña</button>' : '') + '</div>';
   }
 
   /* ---------- Inicio ---------- */
@@ -791,7 +800,7 @@
       return '<button type="button" class="brand-tile ' + c + '" data-act="go-cat" data-cat="' + c + '"><b>' + CATS[c].name + '</b><span>' + CATS[c].long + '</span><span class="tag">' + plural(n, 'creatividad', 'creatividades') + ' ' + ic('arrow', 14) + '</span></button>';
     }).join('') + '</div></section>';
     var cnt = function (st) { return PUBS.filter(function (p) { return p.campStatus === st; }).length; };
-    h += '<section class="sec"><div class="sec-h"><h2>Estadísticas generales</h2></div><div class="stats">' + [[PUBS.length, 'Creatividades únicas'], [POSTS.length, 'Publicaciones en calendario'], [cnt('publicada'), 'Campañas publicadas'], [cnt('pendiente'), 'Campañas pendientes'], [PUBS.filter(function (p) { return p.cat === 'worko'; }).length, 'Creatividades WORKO'], [PUBS.filter(function (p) { return p.cat === 'forli'; }).length, 'Creatividades FORLI']].map(function (s) { return '<div class="stat"><b>' + s[0] + '</b><span>' + s[1] + '</span></div>'; }).join('') + '</div><p class="note" style="margin-top:12px">Calculadas a partir de los registros guardados en el repositorio.</p></section>';
+    h += '<section class="sec"><div class="sec-h"><h2>Estadísticas generales</h2></div><div class="stats">' + [[PUBS.length, 'Creatividades únicas'], [POSTS.length, 'Publicaciones en calendario'], [cnt('publicada'), 'Campañas publicadas'], [cnt('pendiente'), 'Campañas pendientes'], [PUBS.filter(function (p) { return p.cat === 'worko'; }).length, 'Creatividades WORKO'], [PUBS.filter(function (p) { return p.cat === 'forli'; }).length, 'Creatividades FORLI']].map(function (s) { return '<div class="stat"><b>' + s[0] + '</b><span>' + s[1] + '</span></div>'; }).join('') + '</div><p class="note" style="margin-top:12px">Calculadas a partir de los registros guardados en el directorio.</p></section>';
     return h;
   }
 
@@ -1021,7 +1030,7 @@
     var up = sortPubs(pend.filter(function (p) { return p.refDate; }), 'fecha-asc').slice(0, 8), nodate = pend.filter(function (p) { return !p.refDate; });
     h += '<section class="sec"><div class="sec-h"><h2>Próximas campañas pendientes</h2><button type="button" class="btn primary" data-act="nav" data-r="adm-nueva">' + ic('plus', 16) + 'Nueva campaña</button></div>' + tableHtml(up, 'pend', 'No hay campañas pendientes con fecha prevista.') + '</section>';
     if (nodate.length) h += '<section class="sec"><div class="sec-h"><h2>Pendientes sin fecha</h2></div>' + tableHtml(nodate, 'pend', '') + '</section>';
-    if (hasDemo) h += '<section class="sec"><div class="panel-box"><h3>Datos de demostración</h3><p class="note">El repositorio incluye campañas de ejemplo marcadas como demostración. Elimínalas cuando empieces a cargar contenido real.</p><div><button type="button" class="btn danger" data-act="adm-del-demo">Eliminar datos de demostración</button></div></div></section>';
+    if (hasDemo) h += '<section class="sec"><div class="panel-box"><h3>Datos de demostración</h3><p class="note">El directorio incluye campañas de ejemplo marcadas como demostración. Elimínalas cuando empieces a cargar contenido real.</p><div><button type="button" class="btn danger" data-act="adm-del-demo">Eliminar datos de demostración</button></div></div></section>';
     return h;
   }
   function renderAdmGestionar() {
@@ -1121,7 +1130,7 @@
   function setMsg(kind, text) { if (F) F.msg = { kind: kind, text: text }; var b = $('form-msg'); if (b) b.innerHTML = msgHtml(); }
   function errText(e) {
     var c = e && e.code;
-    var map = { too_large: 'Una imagen supera el límite de 20 MB.', unsupported_type: 'El formato de una imagen no es válido. Usa JPG o JPEG.', quota_or_state: 'Se ha agotado el espacio de almacenamiento de imágenes. Elimina archivos que ya no uses.', quota_exceeded: 'Se ha alcanzado el límite de almacenamiento de datos del repositorio.', rate_limited: 'Demasiadas peticiones seguidas. Espera unos segundos y vuelve a intentarlo.', store_unavailable: 'El almacenamiento no responde ahora mismo. Inténtalo de nuevo en unos segundos.', unavailable: 'El repositorio no responde ahora mismo. Inténtalo de nuevo en unos segundos.', invalid_argument: 'No tienes permiso para guardar cambios, o los datos no son válidos.', not_granted: 'Tu usuario no tiene permiso para subir archivos.', revoked: 'Tu acceso ha cambiado. Recarga la página.' };
+    var map = { too_large: 'Una imagen supera el límite de 20 MB.', unsupported_type: 'El formato de una imagen no es válido. Usa JPG o JPEG.', quota_or_state: 'Se ha agotado el espacio de almacenamiento de imágenes. Elimina archivos que ya no uses.', quota_exceeded: 'Se ha alcanzado el límite de almacenamiento de datos del directorio.', rate_limited: 'Demasiadas peticiones seguidas. Espera unos segundos y vuelve a intentarlo.', store_unavailable: 'El almacenamiento no responde ahora mismo. Inténtalo de nuevo en unos segundos.', unavailable: 'El directorio no responde ahora mismo. Inténtalo de nuevo en unos segundos.', invalid_argument: 'No tienes permiso para guardar cambios, o los datos no son válidos.', not_granted: 'Tu usuario no tiene permiso para subir archivos.', revoked: 'Tu acceso ha cambiado. Recarga la página.' };
     return map[c] || ('No se ha podido completar la operación' + (e && e.message ? ': ' + e.message : '.'));
   }
   function addFiles(files) {
@@ -1162,7 +1171,7 @@
     if (!F || F.busy) return;
     var errs = validateForm(); showErrors(errs);
     if (Object.keys(errs).length) { setMsg('bad', 'Revisa los campos marcados antes de guardar.'); return; }
-    if (!DB || !ASSETS) { setMsg('bad', 'No hay conexión con el repositorio o tu usuario no tiene permiso para guardar. No se ha guardado nada.'); return; }
+    if (!DB || !ASSETS) { setMsg('bad', 'No hay conexión con el directorio o tu usuario no tiene permiso para guardar. No se ha guardado nada.'); return; }
     setBusy(true); setMsg('info', 'Guardando…');
     try {
       var pend = F.images.filter(function (i) { return !i.id; });
@@ -1458,12 +1467,12 @@
     return '<div class="login-screen">' +
       '<div class="login-brand"><div class="login-brand-mark"><strong>FICOESA</strong><span>CREATIVE HUB</span></div></div>' +
       '<section class="login-card" aria-label="Iniciar sesión en FICOESA Creative Hub">' +
-      '<p class="login-kicker">Acceso exclusivo</p><h1 class="login-title">Bienvenido al repositorio</h1>' +
+      '<p class="login-kicker">Acceso exclusivo</p><h1 class="login-title">Bienvenido al directorio</h1>' +
       '<p class="login-subtitle">Biblioteca privada de campañas y creatividades de WORKO y FORLI. Accede con tu cuenta autorizada.</p>' +
       (authState === 'denied' ? '<p class="err" style="margin-bottom:16px">Tu correo no está incluido en la lista de usuarios autorizados.</p>' : '') +
       '<form id="auth-form" class="form" style="gap:18px"><div class="field"><label for="auth-email">Correo electrónico</label><input class="in" type="email" id="auth-email" placeholder="nombre@empresa.com" autocomplete="username" required></div>' +
       '<div class="field"><label for="auth-pass">Contraseña</label><input class="in" type="password" id="auth-pass" placeholder="Introduce tu contraseña" autocomplete="current-password" required></div>' +
-      '<p class="err" id="auth-error" aria-live="polite"></p><button type="submit" class="btn primary login-submit">Entrar al repositorio →</button></form></section>' +
+      '<p class="err" id="auth-error" aria-live="polite"></p><button type="submit" class="btn primary login-submit">Entrar al directorio →</button></form></section>' +
       '<p class="login-footer">FICOESA · Acceso reservado a usuarios autorizados</p></div>';
   }
   async function submitLogin() {
