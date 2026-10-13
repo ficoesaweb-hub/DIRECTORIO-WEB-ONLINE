@@ -1,13 +1,4 @@
-<!doctype html><html><head><script>
-/* Portada FICOESA: la web principal muestra la intro; ?acceso=1 permite entrar al login sin bucle. */
-(function () {
-  var search = new URLSearchParams(window.location.search);
-  var authCallback = search.has('code') || search.has('token_hash') || /(?:^#|&)access_token=/.test(window.location.hash);
-  if (search.get('acceso') !== '1' && !authCallback) {
-    window.location.replace(new URL('./intro/', window.location.href).href);
-  }
-})();
-</script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
   /* Acceso privado: pagina completa centrada, independiente de la barra lateral */
   body.login-mode .app { display: block; min-height: 100vh; min-height: 100dvh; }
   body.login-mode .content { min-height: 100vh; min-height: 100dvh; padding: 0 clamp(18px, 4vw, 36px); display: flex; flex-direction: column; }
@@ -1280,6 +1271,7 @@
     var active = route.name === 'pub' ? (from && from.name !== 'buscar' ? from.name : '') : (isAdm(route.name) ? 'adm-resumen' : route.name);
     var h = items.map(function (i) { return '<button type="button" class="nav-i" data-act="nav" data-r="' + i[0] + '"' + (active === i[0] ? ' aria-current="page"' : '') + '>' + ic(i[1], 20) + i[2] + (i[0] === 'catalogo' ? '<small>Pronto</small>' : '') + '</button>'; }).join('') + '<button type="button" class="nav-i" data-act="focus-search">' + ic('search', 20) + 'Buscador</button>';
     if (authState === 'admin') h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="nav" data-r="adm-resumen"' + (active === 'adm-resumen' ? ' aria-current="page"' : '') + '>' + ic('admin', 20) + 'Administración</button><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + 'Cerrar sesión</button>'; else h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + 'Cerrar sesión</button>';
+    h += '<div class="nav-sep"></div><a class="nav-i" href="./intro/" style="text-decoration:none">' + ic('home',20) + 'Volver a la intro ↗</a>';
     $('nav').innerHTML = h;
   }
   function onData() {
