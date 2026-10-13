@@ -462,6 +462,64 @@
   .thumbs button, .ev img, .day-item img, .lr img {
     background-color: #1a1a1a;
   }
+
+  /* COLORES: la clasificacion sigue al calendario, nunca al reves. */
+  .c-worko { color: #f6c118; }
+  .c-forli { color: #e9e229; }
+  .c-otros { color: #ffffff; }
+  .c-festivos { color: #5ce1e6; }
+
+  /* Etiquetas de marca y glifos de las categorias en listados y fichas. */
+  .cat-card.worko { background: #f6c118; border-color: #f6c118; color: #252525; }
+  .cat-card.forli { background: #e9e229; border-color: #e9e229; color: #252525; }
+  .cat-card.otros { border-top: 4px solid #ffffff; }
+  .cat-card.festivos { border-top: 4px solid #5ce1e6; }
+  .cat-card.worko .cm, .cat-card.forli .cm { color: #252525; }
+  .cat-card.otros .cm { color: #ffffff; }
+  .cat-card.festivos .cm { color: #5ce1e6; }
+
+  /* Navegacion dinamica sutil y sin saltos de maquetacion. */
+  @keyframes ficoesa-enter {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes ficoesa-card-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  #main.page-enter > * { animation: ficoesa-enter 280ms ease-out both; }
+  #main.page-enter :is(.acc, .pcard, .year-card, .cat-card, .month-card, .camp-card, .panel-box, .media-card) {
+    animation: ficoesa-card-in 360ms ease-out both;
+  }
+  #main.page-enter :is(.acc, .pcard, .year-card, .cat-card, .month-card, .camp-card, .panel-box, .media-card):nth-child(2) { animation-delay: 40ms; }
+  #main.page-enter :is(.acc, .pcard, .year-card, .cat-card, .month-card, .camp-card, .panel-box, .media-card):nth-child(3) { animation-delay: 80ms; }
+  #main.page-enter :is(.acc, .pcard, .year-card, .cat-card, .month-card, .camp-card, .panel-box, .media-card):nth-child(4) { animation-delay: 110ms; }
+
+  .nav-i { transition: color 170ms ease, background-color 170ms ease, border-color 170ms ease, padding-left 170ms ease; }
+  .nav-i:hover { padding-left: 19px; }
+  .pcard, .year-card, .cat-card, .month-card, .camp-card, .media-card, .acc, .btn {
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+  }
+  :is(.pcard, .year-card, .cat-card, .month-card, .camp-card, .media-card):hover:not(:disabled) {
+    transform: translateY(-3px);
+  }
+  .pcard:hover .pc-img, .year-card:hover, .month-card:hover, .camp-card:hover, .media-card:hover .im {
+    box-shadow: 0 7px 20px rgba(0,0,0,.20);
+  }
+  .btn:hover:not(:disabled) { transform: translateY(-1px); }
+  .btn:active:not(:disabled) { transform: translateY(0); }
+  .cell.has { transition: background-color 180ms ease, box-shadow 180ms ease; }
+  .cell.has:hover { box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+
+  @media (prefers-reduced-motion: reduce) {
+    #main.page-enter > *,
+    #main.page-enter :is(.acc, .pcard, .year-card, .cat-card, .month-card, .camp-card, .panel-box, .media-card) {
+      animation: none !important;
+    }
+    .nav-i:hover { padding-left: 14px; }
+    :is(.pcard, .year-card, .cat-card, .month-card, .camp-card, .media-card):hover:not(:disabled),
+    .btn:hover:not(:disabled) { transform: none; }
+  }
 </style>
 
 <div class="app">
@@ -1173,8 +1231,10 @@
   }
 
   /* ---------- Render principal ---------- */
+  var lastAnimatedRoute = null;
   function render(focusId) {
     if (authState !== 'admin' && authState !== 'viewer') {
+      lastAnimatedRoute = null;
       document.body.classList.add('login-mode');
       $('sidebar').hidden = true; $('main').innerHTML = renderAccessGate(); $('pagename').textContent = 'Acceso privado'; $('search-form').hidden = true; return;
     }
@@ -1196,7 +1256,11 @@
       case 'adm-usuarios': html = renderAdmUsuarios(); break;
       default: html = renderHome();
     }
+    var routeToken = route.name + ':' + (route.id || '');
+    var isNewPage = lastAnimatedRoute !== routeToken;
+    lastAnimatedRoute = routeToken;
     $('main').innerHTML = html;
+    $('main').classList.toggle('page-enter', isNewPage);
     $('pagename').textContent = PAGES[route.name] || 'Inicio';
     buildNav();
     if (route.name === 'adm-usuarios') loadAllowedUsers();
