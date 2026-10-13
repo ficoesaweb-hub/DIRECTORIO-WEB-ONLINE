@@ -773,7 +773,7 @@
 
   /* ---------- Inicio ---------- */
   function renderHome() {
-    var accs = [['01', 'calendario', 'cal', 'CALENDARIO', 'Explora nuestras publicaciones por fecha y consulta la actividad editorial de cada mes.', false], ['02', 'directorio', 'dir', 'DIRECTORIO', 'Descubre campañas y diseños organizados por año, marca, mes y categoría.', false], ['03', 'catalogo', 'box', 'CATÁLOGO', 'Encuentra todos los contenidos asociados a cada producto.', true]];
+    var accs = [['01', 'calendario', 'cal', 'CALENDARIO', 'Explora nuestras publicaciones por fecha y consulta la actividad editorial de cada mes.', false], ['02', 'directorio', 'dir', 'DIRECTORIO', 'Descubre campañas y diseños organizados por año, marca, mes y categoría.', false], ['03', 'catalogo', 'box', 'CATÁLOGO', 'Consulta los modelos detectados en nuestras publicaciones y sus campañas asociadas.', false]];
     var h = '<section class="hero"><p class="eyebrow">FICOESA · WORKO · FORLI</p><h1 class="hero-t">FICOESA <em>CREATIVE</em> HUB</h1><p class="hero-s">Directorio digital de diseños, campañas y publicaciones.</p><p class="hero-d">Biblioteca digital de campañas, diseños y publicaciones de WORKO y FORLI.</p></section>';
     h += '<section class="access" aria-label="Módulos">' + accs.map(function (a) {
       return '<button type="button" class="acc" data-act="nav" data-r="' + a[1] + '">' + (a[5] ? '<span class="soon-pill">Próximamente</span>' : '') + '<span class="acc-n">' + a[0] + '</span><span>' + ic(a[2], 34) + '</span><span class="acc-t">' + a[3] + '</span><span class="acc-d">' + a[4] + '</span><span class="acc-go">' + (a[5] ? 'Ver avance' : 'Entrar') + ' ' + ic('arrow', 16) + '</span></button>';
@@ -942,11 +942,222 @@
     return '<div class="page-h"><p class="eyebrow">Buscador</p><h1>Resultados para «' + esc(query) + '»</h1><p>' + plural(res.length, 'creatividad encontrada', 'creatividades encontradas') + '. Busca en título, referencia, campaña, marca, año, mes y explicación.</p></div>' + (gate || (res.length ? pubGrid(res) : '<p class="empty">No hay resultados. Prueba con otra palabra o con la referencia de un producto.</p>'));
   }
 
-  /* ---------- Catálogo (próximamente) ---------- */
+  /* ---------- Catálogo autogenerado desde las campañas: SIN inventario externo ---------- */
+  var catalogueView = { brand: null, family: null, model: null, q: '' };
+  var FORLI_KNOWN = ['HOUSTON AM','HOUSTON AZ','PHILADELPHIA','CHESTER','LOGAN','OXFORD','URBAN','ALASKA','NEVADA','FLORIDA','ASPEN','TEXAS','SAVANNAH','BRONX','HARLEM','MEMPHIS','INDIANA','COLUMBIA','DOVER','ROCK','SIOUX','CHELSEA','UTAH','YORK','SIDNEY','CHEROKEE','DENVER','COLORADO','VEGAS','TUCSON','DELTA','FRESNO','FARGO','RENO','BALTIMORE','CLEVELAND','ATLANTA','MIAMI','VIRGINIA','CASPER','ORLEANS','MADISON','MICHIGAN','PORTLAND','OREGON','BUFFALO','BOSTON','DETROIT','CHICAGO','AUSTIN','KANSAS'];
+  var FORLI_GROUPS = {
+    'Evolution':['HOUSTON AM','HOUSTON AZ','ASPEN','TEXAS'],
+    'Soft':['BRONX','HARLEM','SIDNEY'],
+    'Flex ESD':['ALASKA','NEVADA','FLORIDA','CHEROKEE','DENVER'],
+    'Rider':['INDIANA','MEMPHIS','ROCK','SIOUX'],
+    'Trekking':['COLORADO','SAVANNAH','COLUMBIA','UTAH'],
+    'Neo sanitario':['DOVER','VEGAS','TUCSON','DELTA'],
+    'White metal free':['FRESNO','FARGO','RENO','PHILADELPHIA','YORK'],
+    'Hydro':['BALTIMORE','CLEVELAND'],
+    'Medium metal free':['ATLANTA','MIAMI','VIRGINIA','OXFORD','CASPER'],
+    'Medium steel':['ORLEANS','MADISON'],
+    'Basic metal free':['MICHIGAN','PORTLAND','OREGON','BUFFALO'],
+    'Basic steel':['BOSTON','DETROIT','CHICAGO','AUSTIN','KANSAS']
+  };
+  /* FORLI: altas guardadas en metadatos de campanas; accesibles a todos los administradores.
+     No requiere tablas adicionales y respeta el adaptador JSONB existente. */
+  var FORLI_LOCAL_GROUPS = {};
+  var FORLI_MASTER = [];
+  var FORLI_MASTER_ERROR = '';
+  async function forliMasterLoad() {
+    var backend = window.FICOESA_BACKEND;
+    if (!backend || !backend.client || (authState !== 'admin' && authState !== 'viewer')) return;
+    try {
+      var result = await backend.client.from('ficoesa_forli_catalog').select('id,gama,modelo').order('gama');
+      if (result.error) throw result.error;
+      FORLI_MASTER = result.data || []; FORLI_MASTER_ERROR = '';
+      if (route.name === 'catalogo') render();
+      if (F && F.cat === 'forli') refreshForliPanel();
+    } catch (e) { FORLI_MASTER_ERROR = e.message || String(e); console.warn('Maestro FORLI:', e); }
+  }
+  async function forliMasterInsert(gama, modelo) {
+    if (authState !== 'admin') { alert('Solo los administradores pueden añadir gamas y modelos.'); return false; }
+    var backend = window.FICOESA_BACKEND;
+    if (!backend || !backend.client) { alert('No hay conexión con Supabase.'); return false; }
+    var check = FORLI_MASTER.some(function(r){return catNorm(r.gama)===catNorm(gama) && catNorm(r.modelo||'')===catNorm(modelo||'');});
+    if (check) return true;
+    var response = await backend.client.from('ficoesa_forli_catalog').insert({gama:gama,modelo:modelo || null});
+    if (response.error) { alert('No se ha guardado en Supabase: '+response.error.message+'\nComprueba que has ejecutado el SQL de instalación.'); return false; }
+    await forliMasterLoad();
+    return true;
+  }
+  function forliRegistry() {
+    var r = {};
+    Object.keys(FORLI_GROUPS).forEach(function(g){ r[g] = FORLI_GROUPS[g].slice(); });
+    CAMPAIGNS.forEach(function(c){
+      if(c.cat !== 'forli') return;
+      var f = c.forli || {};
+      (f.knownGroups || []).forEach(function(g){ if (!r[g]) r[g] = []; });
+      (f.knownModels || []).forEach(function(m){
+        if(!m || !m.name || !m.group) return;
+        if(!r[m.group]) r[m.group] = [];
+        if(!r[m.group].some(function(x){return catNorm(x)===catNorm(m.name);} )) r[m.group].push(m.name);
+      });
+    });
+    FORLI_MASTER.forEach(function(row){
+      var g = row.gama, m = row.modelo;
+      if (!r[g]) r[g]=[];
+      if (m && !r[g].some(function(x){return catNorm(x)===catNorm(m);})) r[g].push(m);
+    });
+    Object.keys(FORLI_LOCAL_GROUPS).forEach(function(g){
+      if(!r[g]) r[g]=[];
+      FORLI_LOCAL_GROUPS[g].forEach(function(m){ if(!r[g].some(function(x){return catNorm(x)===catNorm(m);})) r[g].push(m); });
+    });
+    return r;
+  }
+  function forliFormPanel() {
+    if(!F || F.cat!=='forli') return '';
+    var reg=forliRegistry(), groups=Object.keys(reg).sort(function(a,b){return a.localeCompare(b,'es');});
+    var f=F.forli;
+    return '<section class="panel-box" style="grid-column:1/-1;gap:14px" aria-label="Modelos FORLI">'+
+      '<h3>ANEXO FORLI · MODELOS Y GAMAS</h3><p class="hint">Selecciona uno o varios modelos, o marca una gama completa. Las selecciones se guardan con la campaña y alimentan el catálogo.</p>'+
+      '<div class="field"><label for="forli-groups">Gamas</label><div id="forli-groups" style="display:grid;gap:10px">'+groups.map(function(g){
+        var active=f.gamas.indexOf(g)>=0;
+        return '<div style="padding:12px;border:1px solid var(--line)"><label class="check" style="font-weight:700"><input type="checkbox" data-forli-group="'+esc(g)+'"'+(active?' checked':'')+'>'+esc(g)+' <span class="note">('+reg[g].length+' modelos)</span></label>'+
+          (active?'<label class="check" style="margin:8px 0 8px 24px"><input type="checkbox" data-forli-all="'+esc(g)+'"'+(f.fullGamas.indexOf(g)>=0?' checked':'')+'>Asociar toda la gama</label>'+ 
+          (f.fullGamas.indexOf(g)>=0?'<p class="note" style="margin-left:24px">La campaña queda asociada a toda esta gama.</p>':'<div style="display:flex;flex-wrap:wrap;gap:8px 18px;margin-left:24px">'+reg[g].map(function(m){return '<label class="check"><input type="checkbox" data-forli-model="'+esc(g)+'|'+esc(m)+'"'+(f.models.some(function(x){return x.group===g && catNorm(x.name)===catNorm(m);})?' checked':'')+'>'+esc(m)+'</label>';}).join('')+'</div>') :'')+'</div>';
+      }).join('')+'</div></div>'+
+      '<div class="form-actions"><button type="button" class="btn sm" data-act="forli-new-group">'+ic('plus',14)+'Añadir gama nueva</button><button type="button" class="btn sm" data-act="forli-new-model">'+ic('plus',14)+'Añadir modelo nuevo</button></div>'+
+      '<p class="hint">Las gamas y modelos nuevos se guardan en el maestro de Supabase. Las asociaciones con la campaña se guardan al pulsar Guardar campaña.' + (FORLI_MASTER_ERROR ? ' AVISO: '+esc(FORLI_MASTER_ERROR) : '') + '</p><span class="err" id="e-forli"></span></section>';
+  }
+  function refreshForliPanel(){var el=$('forli-panel');if(el)el.innerHTML=forliFormPanel();}
+  function forliChange(t){
+    if(!F || F.cat!=='forli')return;
+    var f=F.forli, g=t.getAttribute('data-forli-group'), all=t.getAttribute('data-forli-all'), model=t.getAttribute('data-forli-model');
+    if(g){if(t.checked){if(f.gamas.indexOf(g)<0)f.gamas.push(g);}else{f.gamas=f.gamas.filter(function(x){return x!==g;});f.fullGamas=f.fullGamas.filter(function(x){return x!==g;});f.models=f.models.filter(function(x){return x.group!==g;});}}
+    if(all){if(t.checked){if(f.fullGamas.indexOf(all)<0)f.fullGamas.push(all);}else f.fullGamas=f.fullGamas.filter(function(x){return x!==all;});}
+    if(model){var split=model.indexOf('|'),mg=model.slice(0,split),mn=model.slice(split+1);if(t.checked){if(!f.models.some(function(x){return x.group===mg&&catNorm(x.name)===catNorm(mn);}))f.models.push({group:mg,name:mn});}else f.models=f.models.filter(function(x){return !(x.group===mg&&catNorm(x.name)===catNorm(mn));});}
+    refreshForliPanel();
+  }
+  async function forliAddGroup(){
+    if(!F || F.cat!=='forli')return;
+    var g=prompt('Nombre de la nueva gama FORLI:');if(g===null)return;
+    g=g.trim().slice(0,100);if(!g){alert('Indica el nombre de la gama.');return;}
+    var reg=forliRegistry();var existing=Object.keys(reg).filter(function(x){return catNorm(x)===catNorm(g);})[0];
+    if(existing){g=existing;}else{
+      if (!await forliMasterInsert(g,null))return;
+      if (!FORLI_LOCAL_GROUPS[g])FORLI_LOCAL_GROUPS[g]=[];
+    }
+    if(F.forli.gamas.indexOf(g)<0)F.forli.gamas.push(g);
+    refreshForliPanel();
+  }
+  async function forliAddModel(){
+    if(!F || F.cat!=='forli')return;
+    var reg=forliRegistry(),groups=Object.keys(reg).sort(),name=prompt('Nombre del nuevo modelo FORLI:');
+    if(name===null)return;name=name.trim().slice(0,100);
+    if(!name){alert('Indica un modelo.');return;}
+    var group=prompt('¿A qué gama pertenece '+name+'?\nGamas disponibles: '+groups.join(', '));
+    if(group===null)return;group=group.trim();
+    var found=groups.filter(function(g){return catNorm(g)===catNorm(group);})[0];
+    if(!found){alert('La gama no existe. Primero pulsa «Añadir gama nueva».');return;}
+    if(!reg[found].some(function(m){return catNorm(m)===catNorm(name);} )){
+      if(!await forliMasterInsert(found,name))return;
+      if(!FORLI_LOCAL_GROUPS[found])FORLI_LOCAL_GROUPS[found]=[];
+      FORLI_LOCAL_GROUPS[found].push(name);
+    }
+    if(F.forli.gamas.indexOf(found)<0)F.forli.gamas.push(found);
+    if(!F.forli.models.some(function(m){return catNorm(m.name)===catNorm(name)&&m.group===found;}))F.forli.models.push({name:name,group:found});
+    F.forli.fullGamas=F.forli.fullGamas.filter(function(g){return g!==found;});
+    refreshForliPanel();
+  }
+  var WORKO_LINES = {'1':'Complementos','2':'Alta Visibilidad','3':'Industria','4':'Multinorma','6':'Servicios'};
+  function catNorm(x) { return norm(x || '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim(); }
+  function workoCodes(title) {
+    var text = String(title || '').toUpperCase(), codes = [], m;
+    var re = /\bWR\s*[.\-_ ]?\s*([0-9])\s*[.\-_ ]?\s*([0-9]{3,5})([A-Z]{0,6})(?![A-Z0-9])/g;
+    while ((m = re.exec(text))) {
+      var code = 'WR.' + m[1] + '.' + m[2] + (m[3] || '');
+      if (codes.indexOf(code) < 0) codes.push(code);
+    }
+    return codes;
+  }
+  function forliNames(title) {
+    var txt = catNorm(title), found = [];
+    FORLI_KNOWN.slice().sort(function (a,b) { return b.length - a.length; }).forEach(function (name) {
+      var token = catNorm(name);
+      if ((' ' + txt + ' ').indexOf(' ' + token + ' ') >= 0 && !found.some(function (v) { return (' ' + catNorm(v) + ' ').indexOf(' ' + token + ' ') >= 0; })) found.push(name);
+    });
+    // No se crea una ficha a partir de nombres ambiguos o títulos genéricos.
+    return found;
+  }
+  function workoType(title) {
+    var x = catNorm(title);
+    var types = [['Pantalones y bermudas', /PANTALON|BERMUDA/], ['Polos y camisetas', /POLO|CAMISETA/], ['Softshell', /SOFTSHELL/], ['Parkas y chaquetas', /PARKA|CHAQUETA|CAZADORA|BOMBER|ANORAK/], ['Chalecos', /CHALECO/], ['Sudaderas y polares', /SUDADERA|POLAR/], ['Buzos y monos', /BUZO|MONO/], ['Batas y casacas', /BATA|CASACA/], ['Complementos', /GORRA|RODILLERA|GUANTE|CINTURON|GORRO/]];
+    for (var i=0;i<types.length;i++) if (types[i][1].test(x)) return types[i][0];
+    return 'Otros modelos';
+  }
+  function forliFamily(name) {
+    var saved = FORLI_MASTER.find(function(row){return row.modelo && catNorm(row.modelo)===catNorm(name);});
+    if (saved) return saved.gama;
+    var groups = Object.keys(FORLI_GROUPS);
+    for (var i=0;i<groups.length;i++) if (FORLI_GROUPS[groups[i]].indexOf(name) >= 0) return groups[i];
+    return 'Colección por verificar';
+  }
+  function catalogueEntries() {
+    var idx = {};
+    PUBS.forEach(function (pub) {
+      if (pub.cat !== 'worko' && pub.cat !== 'forli') return;
+      var ff=pub.doc.forli||null;
+      var names = pub.cat === 'worko' ? workoCodes(pub.title) : (ff ? ff.models.map(function(m){return m.name;}) : forliNames(pub.title));
+      if(pub.cat==='forli' && ff) (ff.fullGamas||[]).forEach(function(g){var k='forli|GAMA|'+g;if(!idx[k])idx[k]={key:k,name:'GAMA COMPLETA: '+g,brand:'forli',family:g,pubs:[]};if(!idx[k].pubs.some(function(p){return p.id===pub.id;}))idx[k].pubs.push(pub);});
+      names.forEach(function (name) {
+        var brand = pub.cat;
+        var linked=ff && ff.models.filter(function(m){return catNorm(m.name)===catNorm(name);})[0];
+        var family = brand === 'worko' ? (WORKO_LINES[(name.split('.')[1] || '')] || 'Línea sin clasificar') : (linked ? linked.group : forliFamily(name));
+        var k = brand + '|' + name;
+        if (!idx[k]) idx[k] = { key:k, name:name, brand:brand, family:family, pubs:[] };
+        if (!idx[k].pubs.some(function (p) { return p.id === pub.id; })) idx[k].pubs.push(pub);
+      });
+    });
+    var reg=forliRegistry(); PUBS.filter(function(p){return p.cat==='forli' && p.doc.forli;}).forEach(function(p){(p.doc.forli.fullGamas||[]).forEach(function(g){(reg[g]||[]).forEach(function(name){var k='forli|'+name;if(!idx[k])idx[k]={key:k,name:name,brand:'forli',family:g,pubs:[]};if(!idx[k].pubs.some(function(x){return x.id===p.id;}))idx[k].pubs.push(p);});});});
+    return Object.keys(idx).map(function (k) { return idx[k]; }).sort(function (a,b) { return a.name.localeCompare(b.name, 'es', {numeric:true}); });
+  }
+  function catalogueCrumbs() {
+    var h = '<nav class="crumbs" aria-label="Ruta del catálogo"><button type="button" data-act="cat-reset">Catálogo</button>';
+    if (catalogueView.brand) h += '<span class="sep">›</span><button type="button" data-act="cat-brand" data-brand="' + catalogueView.brand + '">' + CATS[catalogueView.brand].name + '</button>';
+    if (catalogueView.family) h += '<span class="sep">›</span><button type="button" data-act="cat-family" data-family="' + esc(catalogueView.family) + '">' + esc(catalogueView.family) + '</button>';
+    if (catalogueView.model) h += '<span class="sep">›</span><span class="cur">' + esc(catalogueView.model) + '</span>';
+    return h + '</nav>';
+  }
   function renderCatalog() {
-    return '<div class="page-h"><p class="eyebrow">03 · Catálogo</p></div><section class="soon-hero"><span class="soon-badge">PRÓXIMAMENTE</span><h1>CATÁLOGO DE PRODUCTOS</h1><p>Estamos preparando una nueva forma de consultar todos los diseños, publicaciones y campañas asociados a cada producto de WORKO y FORLI.</p></section>' +
-      '<section class="sec"><div class="sec-h"><h2>Cómo funcionará</h2></div><ol class="steps">' + [['Marca', 'WORKO o FORLI'], ['Familia', 'Tipo de producto'], ['Colección', 'Temporada o gama'], ['Modelo', 'Ficha individual'], ['Referencia', 'Código de producto']].map(function (s, i) { return '<li><span class="eyebrow">Nivel ' + (i + 1) + '</span><b>' + s[0] + '</b><span>' + s[1] + '</span></li>'; }).join('') + '</ol></section>' +
-      '<section class="sec"><div class="sec-h"><h2>Qué podrás consultar de cada producto</h2></div><ul class="rel-list"><li>Publicaciones donde aparece.</li><li>Campañas en las que se ha utilizado.</li><li>Diseños publicitarios y fotografías comerciales asociados.</li><li>Carruseles de Instagram y creatividades de LinkedIn.</li><li>Materiales corporativos y recursos gráficos adicionales.</li></ul><p class="note" style="margin-top:18px">Ejemplo de búsqueda prevista: <span class="sample">WR.2.152</span> mostrará todas las publicaciones, campañas y diseños en los que ha aparecido esa referencia, sea cual sea la fecha.</p></section>';
+    var h = '<div class="page-h"><p class="eyebrow">03 · Catálogo dinámico</p><h1>Catálogo de publicaciones por modelo</h1><p>Este catálogo se genera automáticamente a partir de los títulos de las campañas del Directorio. WORKO se detecta por referencia; FORLI usa los modelos y gamas asignados en el formulario de campaña. Las campañas FORLI antiguas sin selección siguen usando coincidencias por título.</p></div>';
+    var gate = stateGate(); if (gate) return h + gate;
+    var entries = catalogueEntries();
+    h += catalogueCrumbs();
+    if (!catalogueView.brand) {
+      h += '<div class="brand-tiles">' + ['worko','forli'].map(function (brand) { var n = entries.filter(function (x) {return x.brand === brand;}).length; return '<button type="button" class="brand-tile '+brand+'" data-act="cat-brand" data-brand="'+brand+'"><b>'+CATS[brand].name+'</b><span>'+ plural(n,'modelo detectado','modelos detectados') +'</span><span>Explorar modelos '+ ic('arrow',16) + '</span></button>'; }).join('') + '</div>';
+      if (!entries.length) h += '<p class="empty" style="margin-top:22px">Todavía no hay títulos de campaña que identifiquen modelos. Las campañas existentes continúan disponibles en el Directorio.</p>';
+      return h;
+    }
+    var bentries = entries.filter(function (x) {return x.brand === catalogueView.brand;});
+    if (!catalogueView.family) {
+      var groups = uniq(bentries.map(function (x) {return x.family;})).sort();
+      h += '<h2 style="margin-bottom:20px">' + CATS[catalogueView.brand].name + ' · Líneas y colecciones</h2>';
+      h += groups.length ? '<div class="cat-grid">' + groups.map(function (family) { var l=bentries.filter(function(x){return x.family===family;}); return '<button type="button" class="cat-card" data-act="cat-family" data-family="'+esc(family)+'"><b>'+esc(family)+'</b><span class="note">'+ plural(l.length,'modelo','modelos') +'</span><span class="link">Ver modelos '+ic('arrow',14)+'</span></button>'; }).join('') + '</div>' : '<p class="empty">Sin modelos detectados todavía para esta marca.</p>';
+      return h;
+    }
+    var candidates = bentries.filter(function (x) {return x.family===catalogueView.family;});
+    if (!catalogueView.model) {
+      h += '<div class="toolbar"><div class="sel" style="width:min(100%,380px)"><label for="cat-query">Buscar modelo por nombre o referencia</label><input id="cat-query" type="search" placeholder="Buscar modelo..." value="'+esc(catalogueView.q)+'" autocomplete="off"></div></div>';
+      h += '<div id="catalogue-models">' + catalogueModelsHtml(candidates) + '</div>';
+      return h;
+    }
+    var item=candidates.filter(function(x){return x.name===catalogueView.model;})[0];
+    if (!item) { catalogueView.model=null; return renderCatalog(); }
+    h += '<div class="f-head"><p class="eyebrow">'+CATS[item.brand].name+' · '+esc(item.family)+'</p><h1>'+esc(item.name)+'</h1><p class="note">'+plural(item.pubs.length,'publicación asociada','publicaciones asociadas')+' vinculadas a este modelo o gama</p></div>';
+    h += '<section class="sec" style="margin-top:22px"><div class="sec-h"><h2>Publicaciones de '+esc(item.name)+'</h2></div>'+pubGrid(sortPubs(item.pubs,'fecha-desc'))+'</section>';
+    h += '<p class="note" style="margin-top:20px">Pulsa una publicación para abrir su ficha original y consultar imágenes, enlaces y detalles de campaña.</p>';
+    return h;
+  }
+  function catalogueModelsHtml(candidates) {
+    var q=catNorm(catalogueView.q);
+    var list=candidates.filter(function(x){return !q || catNorm(x.name).indexOf(q)>=0;});
+    return list.length ? '<div class="grid sm">'+list.map(function(x){var pub=x.pubs[0];return '<button type="button" class="pcard" data-act="cat-model" data-model="'+esc(x.name)+'"><span class="pc-img"><img src="'+cover(pub)+'" alt="Portada de campaña '+esc(pub.title)+'" loading="lazy"></span><span class="pc-b"><span class="pc-t">'+esc(x.name)+'</span><span class="pc-m">'+esc(x.family)+' · '+plural(x.pubs.length,'publicación','publicaciones')+'</span></span></button>';}).join('')+'</div>' : '<p class="empty">No se han encontrado modelos con ese nombre o referencia.</p>';
   }
 
   /* ---------- Ficha única ---------- */
@@ -970,6 +1181,7 @@
     if (p.demo) h += '<p class="demo-note">Imagen de demostración generada para esta maqueta.</p>';
     h += '</div><div><div class="f-head"><div>' + catTag(p.cat) + '</div><h1>' + esc(p.title) + '</h1><div class="f-meta"><span class="ref">' + esc(p.ref) + '</span><span>' + esc(gl(gk(p))) + '</span><span>' + fmtDate(p.refDate) + '</span>' + statusLabel(p.status) + '</div>' +
       '<div class="f-actions"><button type="button" class="btn" data-act="back">' + ic('back', 16) + 'Volver</button><button type="button" class="btn primary" data-act="copy-link">' + ic('copy', 16) + 'Copiar enlace interno</button>' + (authState === 'admin' ? '<button type="button" class="btn" data-act="adm-edit" data-id="' + esc(p.id) + '">' + ic('edit', 16) + 'Editar campaña</button>' : '') + '</div><div id="link-box"></div></div>';
+    if(p.cat==='forli' && p.doc.forli){var ff=p.doc.forli;h+='<section class="f-sec"><h2>Modelos y gamas FORLI</h2><p class="note">'+esc((ff.fullGamas||[]).map(function(g){return 'Gama completa: '+g;}).concat((ff.models||[]).map(function(m){return m.name+' ('+m.group+')';})).join(' · ')||'Sin modelos asignados')+'</p></section>';}
     h += '<section class="f-sec"><h2>Explicación de la campaña</h2><blockquote class="copy">' + esc(p.desc || 'Sin explicación.') + '</blockquote></section>';
     var dims = p.images.length && p.images[p.coverIdx].w ? p.images[p.coverIdx].w + ' × ' + p.images[p.coverIdx].h + ' px' : (p.demo ? '1080 × 1350 px (demostración)' : '—');
     h += '<section class="f-sec"><h2>Información</h2><dl class="info"><div><dt>Formato</dt><dd>' + p.type + '</dd></div><div><dt>Dimensiones de la portada</dt><dd>' + dims + '</dd></div><div><dt>Imágenes</dt><dd>' + p.nImg + '</dd></div><div><dt>Marca</dt><dd>' + CATS[p.cat].name + '</dd></div><div><dt>Fecha prevista</dt><dd>' + fmtDate(p.planned) + '</dd></div><div><dt>Fecha real</dt><dd>' + fmtDate(p.real) + '</dd></div></dl></section>';
@@ -1068,11 +1280,12 @@
   }
 
   /* ---- Formulario Nueva campaña / Editar ---- */
-  function newForm() { return { id: null, existing: null, title: '', cat: 'worko', group: '', desc: '', status: 'pendiente', planned: '', real: '', images: [], coverKey: null, posts: [], busy: false, msg: null, n: 0 }; }
+  function newForm() { return { id: null, existing: null, title: '', cat: 'worko', group: '', desc: '', status: 'pendiente', planned: '', real: '', images: [], coverKey: null, posts: [], busy: false, msg: null, n: 0, forli: {gamas:[],fullGamas:[],models:[],knownGroups:[],knownModels:[]} }; }
   function formFrom(c) {
     var f = newForm(); f.id = c.id; f.existing = c; f.title = c.title || ''; f.cat = c.cat || 'otros'; f.group = c.group || ''; f.desc = c.description || ''; f.status = c.status === 'publicada' ? 'publicada' : 'pendiente'; f.planned = c.plannedDate || ''; f.real = c.realDate || '';
     f.images = (c.images || []).map(function (im) { return { key: 's:' + im.id, id: im.id, name: im.name || 'imagen.jpg', w: im.w || 0, h: im.h || 0, preview: window.FICOESA_BACKEND.publicImage(im.id) }; });
     f.coverKey = c.coverId ? 's:' + c.coverId : null;
+    if(c.forli) f.forli = {gamas:(c.forli.gamas||[]).slice(),fullGamas:(c.forli.fullGamas||[]).slice(),models:(c.forli.models||[]).map(function(x){return {name:x.name,group:x.group};}),knownGroups:(c.forli.knownGroups||[]).slice(),knownModels:(c.forli.knownModels||[]).map(function(x){return {name:x.name,group:x.group};})};
     f.posts = (c.posts || []).map(function (x) { return { net: x.net || 'instagram', planned: x.planned || '', real: x.real || '', status: x.status === 'publicada' ? 'publicada' : 'pendiente', url: x.url || '' }; });
     return f;
   }
@@ -1103,6 +1316,7 @@
       '<div class="field"><label for="f-title">Título de la campaña<span class="req">*</span></label><input class="in" id="f-title" data-f="title" value="' + esc(F.title) + '" placeholder="WR.2.152 | Pantalón multibolsillos de alta visibilidad" maxlength="200" autocomplete="off"><span class="hint">Si empiezas con una referencia seguida de «|», se usará como referencia de la campaña.</span><span class="err" id="e-title"></span></div>' +
       '<div class="two"><div class="field"><label for="f-cat">Marca<span class="req">*</span></label><select class="in" id="f-cat" data-f="cat">' + CAT_ORDER.map(function (c) { return '<option value="' + c + '"' + (F.cat === c ? ' selected' : '') + '>' + (c === 'festivos' ? 'DÍAS ESPECIALES Y FESTIVOS' : c === 'otros' ? 'OTROS DISEÑOS' : CATS[c].name) + '</option>'; }).join('') + '</select><span class="hint">Determina dónde se organiza dentro del directorio.</span><span class="err" id="e-cat"></span></div>' +
       '<div class="field"><label for="f-group">Grupo de campaña</label><input class="in" id="f-group" data-f="group" list="groups" value="' + esc(F.group) + '" placeholder="Ej. Alta visibilidad otoño-invierno" maxlength="120" autocomplete="off"><datalist id="groups">' + datalist.map(function (x) { return '<option value="' + esc(x) + '">'; }).join('') + '</datalist><span class="hint">Opcional. Agrupa campañas dentro del mes.</span></div></div>' +
+      '<div id="forli-panel">' + forliFormPanel() + '</div>' +
       '<div class="field"><span class="lbl">Imágenes de la campaña (JPG o JPEG)<span class="req">*</span></span><label class="dz" id="dz" for="f-files">' + ic('up', 28) + '<b>Arrastra las fotografías aquí o pulsa para elegirlas</b><span>Una o varias a la vez. Hasta 20 MB cada una. Se guardan con su resolución original.</span></label><input class="sr" type="file" id="f-files" accept="image/jpeg,.jpg,.jpeg" multiple><span class="err" id="e-files"></span><div id="thumbs-box">' + thumbsHtml() + '</div><span class="hint">Arrastra las miniaturas para cambiar el orden del carrusel, o usa las flechas. La imagen marcada como portada es la que se ve en tarjetas y calendario.</span></div>' +
       '<div class="two"><div class="field"><label for="f-planned">Fecha de publicación prevista</label><input class="in" type="date" id="f-planned" data-f="planned" value="' + esc(F.planned) + '"><span class="hint">Puedes dejarla vacía: la campaña quedará en «pendientes sin fecha».</span><span class="err" id="e-planned"></span></div>' +
       '<div class="field" id="real-wrap"' + (F.status === 'publicada' ? '' : ' hidden') + '><label for="f-real">Fecha real de publicación</label><input class="in" type="date" id="f-real" data-f="real" value="' + esc(F.real) + '"><span class="hint">Si la dejas vacía se usará la fecha prevista. La fecha prevista se conserva en el historial.</span><span class="err" id="e-real"></span></div></div>' +
@@ -1144,6 +1358,7 @@
     if (!F.title.trim()) e.title = 'Escribe el título de la campaña.';
     if (!CATS[F.cat]) e.cat = 'Elige una marca.';
     if (!F.images.length) e.files = 'Sube al menos una imagen JPG.';
+    if(F.cat==='forli' && !F.forli.fullGamas.length && !F.forli.models.length) e.forli='Selecciona al menos un modelo o una gama completa.';
     if (!F.desc.trim()) e.desc = 'Escribe la explicación de la campaña.';
     if (F.planned && !validDate(F.planned)) e.planned = 'La fecha no es válida.';
     if (F.real && !validDate(F.real)) e.real = 'La fecha no es válida.';
@@ -1152,6 +1367,7 @@
   }
   function showErrors(e) {
     ['title', 'cat', 'files', 'desc', 'planned', 'real'].forEach(function (k) { if ($('e-' + k)) $('e-' + k).textContent = e[k] || ''; });
+    if($('e-forli'))$('e-forli').textContent=e.forli||'';
     F.posts.forEach(function (x, i) { if ($('e-purl-' + i)) $('e-purl-' + i).textContent = e['purl-' + i] || ''; });
     var order = ['title', 'cat', 'files', 'desc', 'planned', 'real'], first = order.filter(function (k) { return e[k]; })[0];
     var ids = { title: 'f-title', cat: 'f-cat', files: 'f-files', desc: 'f-desc', planned: 'f-planned', real: 'f-real' };
@@ -1177,6 +1393,7 @@
         [['plannedDate', ex.plannedDate || '', F.planned || ''], ['realDate', ex.realDate || '', F.real || ''], ['status', ex.status || 'pendiente', F.status]].forEach(function (c) { if (c[1] !== c[2]) hist.push({ at: now, field: c[0], from: c[1], to: c[2] }); });
       }
       var doc = Object.assign(ex, { title: F.title.trim(), cat: F.cat, group: F.group.trim(), description: F.desc.trim(), status: F.status, plannedDate: F.planned || '', realDate: F.status === 'publicada' ? (F.real || '') : '', images: F.images.map(function (i) { return { id: i.id, name: i.name, w: i.w || 0, h: i.h || 0 }; }), coverId: coverItem.id, posts: posts, history: hist.slice(-60), createdAt: ex.createdAt || now, updatedAt: now });
+      if(F.cat==='forli') doc.forli=JSON.parse(JSON.stringify(F.forli)); else delete doc.forli;
       if (F.existing && F.existing.demo) { doc.demo = false; delete doc.demoImages; }
       if (typeof doc.archived !== 'boolean') doc.archived = false;
       await DB.doc('campaigns/' + id).set(doc);
@@ -1269,7 +1486,7 @@
   function buildNav() {
     var items = [['inicio', 'home', 'Inicio'], ['calendario', 'cal', 'Calendario'], ['directorio', 'dir', 'Directorio'], ['catalogo', 'box', 'Catálogo']];
     var active = route.name === 'pub' ? (from && from.name !== 'buscar' ? from.name : '') : (isAdm(route.name) ? 'adm-resumen' : route.name);
-    var h = items.map(function (i) { return '<button type="button" class="nav-i" data-act="nav" data-r="' + i[0] + '"' + (active === i[0] ? ' aria-current="page"' : '') + '>' + ic(i[1], 20) + i[2] + (i[0] === 'catalogo' ? '<small>Pronto</small>' : '') + '</button>'; }).join('') + '<button type="button" class="nav-i" data-act="focus-search">' + ic('search', 20) + 'Buscador</button>';
+    var h = items.map(function (i) { return '<button type="button" class="nav-i" data-act="nav" data-r="' + i[0] + '"' + (active === i[0] ? ' aria-current="page"' : '') + '>' + ic(i[1], 20) + i[2] + '' + '</button>'; }).join('') + '<button type="button" class="nav-i" data-act="focus-search">' + ic('search', 20) + 'Buscador</button>';
     if (authState === 'admin') h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="nav" data-r="adm-resumen"' + (active === 'adm-resumen' ? ' aria-current="page"' : '') + '>' + ic('admin', 20) + 'Administración</button><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + 'Cerrar sesión</button>'; else h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + 'Cerrar sesión</button>';
     h += '<div class="nav-sep"></div><a class="nav-i" href="./intro/" style="text-decoration:none">' + ic('home',20) + 'Volver a la intro ↗</a>';
     $('nav').innerHTML = h;
@@ -1341,6 +1558,10 @@
       case 'menu-close': closeMenu(); break;
       case 'focus-search': closeMenu(); $('q').focus(); break;
       case 'open-pub': openPub(d.id); break;
+      case 'cat-reset': catalogueView = { brand:null,family:null,model:null,q:'' }; render(); break;
+      case 'cat-brand': catalogueView.brand=d.brand; catalogueView.family=null; catalogueView.model=null; catalogueView.q=''; render(); break;
+      case 'cat-family': catalogueView.family=d.family; catalogueView.model=null; catalogueView.q=''; render(); break;
+      case 'cat-model': catalogueView.model=d.model; render(); break;
       case 'back': if (from && from.name !== 'pub') go(from.name, from.id); else go('inicio'); break;
       case 'copy-link': copyLink(); break;
       case 'crumb': crumb(d.k); break;
@@ -1386,14 +1607,24 @@
         F.images = F.images.filter(function (i) { return i.key !== d.key; });
         if (rm && rm.file && rm.preview) { try { URL.revokeObjectURL(rm.preview); } catch (e) {} }
         if (F.coverKey === d.key) F.coverKey = null; $('thumbs-box').innerHTML = thumbsHtml(); break;
+      case 'forli-new-group': forliAddGroup(); break;
+      case 'forli-new-model': forliAddModel(); break;
       case 'post-add': F.posts.push({ net: 'instagram', planned: F.planned || '', real: '', status: 'pendiente', url: '' }); $('posts-box').innerHTML = F.posts.map(postRowHtml).join(''); break;
       case 'post-del': F.posts.splice(+d.i, 1); $('posts-box').innerHTML = F.posts.map(postRowHtml).join(''); break;
     }
   }
 
   document.addEventListener('click', function (e) { var t = e.target.closest ? e.target.closest('[data-act]') : null; if (!t) return; act(t.getAttribute('data-act'), t); });
+  document.addEventListener('input', function(e) {
+    if (e.target && e.target.id === 'cat-query') {
+      catalogueView.q = e.target.value;
+      var box = $('catalogue-models');
+      if (box) box.innerHTML = catalogueModelsHtml(catalogueEntries().filter(function(x) {return x.brand === catalogueView.brand && x.family === catalogueView.family;}));
+    }
+  });
   document.addEventListener('change', function (e) {
     var t = e.target, k = t.getAttribute && t.getAttribute('data-filter');
+    if(t.hasAttribute('data-forli-group')||t.hasAttribute('data-forli-all')||t.hasAttribute('data-forli-model')){forliChange(t);return;}
     if (t.id === 'f-files') { if (F && t.files && t.files.length) addFiles(t.files); t.value = ''; return; }
     if (t.getAttribute && t.getAttribute('data-f')) { fieldInput(t); return; }
     if (t.getAttribute && t.getAttribute('data-p')) { postInput(t); return; }
@@ -1408,6 +1639,7 @@
   function fieldInput(t) {
     if (!F) return; var k = t.getAttribute('data-f'); F[k] = t.value;
     if (k === 'status') $('real-wrap').hidden = F.status !== 'publicada';
+    if(k==='cat') refreshForliPanel();
     if (k === 'cat') { var dl = $('groups'); if (dl) dl.innerHTML = uniq(ALL.filter(function (p) { return p.cat === F.cat && p.group; }).map(function (p) { return p.group; })).sort().map(function (x) { return '<option value="' + esc(x) + '">'; }).join(''); }
   }
   function postInput(t) { if (!F) return; var p = t.getAttribute('data-p').split(':'); F.posts[+p[0]][p[1]] = t.value; }
@@ -1488,11 +1720,34 @@
       '<div><button class="btn primary" type="button" data-act="users-add">Autorizar correo</button></div><p class="note">La autorización no envía invitaciones ni crea contraseñas. Debes dar de alta al usuario también en Authentication → Users de Supabase.</p>' +
       '<div id="allowed-users-list">Cargando whitelist…</div></section>';
   }
+  /* Whitelist: acceso directo a la tabla publica, sin consultar auth.users.
+     Las politicas RLS limitan las operaciones a administradores. */
+  function whitelistClient() {
+    var b = window.FICOESA_BACKEND;
+    if (!b || !b.client) throw new Error('No se encuentra la conexión de Supabase. Revisa supabase-adapter.js.');
+    if (authState !== 'admin') throw new Error('Esta operación requiere una cuenta administradora.');
+    return b.client;
+  }
+  async function whitelistList() {
+    var r = await whitelistClient().from('ficoesa_allowed_users').select('email,role').order('email');
+    if (r.error) throw r.error;
+    return r.data || [];
+  }
+  async function whitelistAdd(email) {
+    email = String(email || '').trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Introduce un correo válido.');
+    var r = await whitelistClient().from('ficoesa_allowed_users').upsert({email:email,role:'viewer'},{onConflict:'email',ignoreDuplicates:true});
+    if (r.error) throw r.error;
+  }
+  async function whitelistRemove(email) {
+    var r = await whitelistClient().from('ficoesa_allowed_users').delete().eq('email', String(email||'').trim().toLowerCase()).eq('role','viewer');
+    if (r.error) throw r.error;
+  }
   async function loadAllowedUsers() {
     if (route.name !== 'adm-usuarios' || authState !== 'admin') return;
     var target = $('allowed-users-list'); if (!target) return;
     try {
-      var rows = await window.FICOESA_BACKEND.allowedUsers.list();
+      var rows = await whitelistList();
       target.innerHTML = '<h3>Correos autorizados (' + rows.length + ')</h3><div class="list">' + rows.map(function (x) {
         return '<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)"><span style="overflow-wrap:anywhere">' + esc(x.email) + ' · ' + esc(x.role) + '</span>' +
           (x.email === 'ficoesaweb@gmail.com' || x.role === 'admin' ? '<span class="note">Administración</span>' : '<button class="btn sm danger" data-act="users-remove" data-email="' + esc(x.email) + '">Revocar</button>') + '</div>';
@@ -1500,12 +1755,12 @@
     } catch (e) { target.textContent = 'No se pudo consultar la whitelist: ' + errText(e); }
   }
   async function addAllowedUser() {
-    try { var email = $('new-allowed-email').value; await window.FICOESA_BACKEND.allowedUsers.add(email); $('new-allowed-email').value = ''; await loadAllowedUsers(); toast('Correo autorizado'); }
+    try { var email = $('new-allowed-email').value; await whitelistAdd(email); $('new-allowed-email').value = ''; await loadAllowedUsers(); toast('Correo autorizado'); }
     catch (e) { toast(errText(e), true); }
   }
   async function removeAllowedUser(email) {
     if (!confirm('¿Revocar el acceso de ' + email + '?')) return;
-    try { await window.FICOESA_BACKEND.allowedUsers.remove(email); await loadAllowedUsers(); toast('Acceso revocado'); }
+    try { await whitelistRemove(email); await loadAllowedUsers(); toast('Acceso revocado'); }
     catch (e) { toast(errText(e), true); }
   }
   var unsubscribeCollection = null;
@@ -1513,6 +1768,7 @@
     if (unsubscribeCollection) { unsubscribeCollection(); unsubscribeCollection = null; }
     if (authState !== 'admin' && authState !== 'viewer') return;
     DB = window.FICOESA_BACKEND.db; dbState = 'loading';
+    forliMasterLoad();
     unsubscribeCollection = DB.collection('campaigns').onSnapshot(async function (snap) {
       try {
         var campaigns = snap.docs.map(function (d) { var o = Object.assign({}, d.data()); o.id = d.id; return o; });
