@@ -520,6 +520,48 @@
     :is(.pcard, .year-card, .cat-card, .month-card, .camp-card, .media-card):hover:not(:disabled),
     .btn:hover:not(:disabled) { transform: none; }
   }
+
+/* FICOESA Motion System v2 — suave, fluido y respetuoso con la accesibilidad. */
+:root { --motion-ease: cubic-bezier(.22,1,.36,1); --motion-fast: 210ms; --motion-mid: 420ms; }
+@keyframes ficoesa-page-v2 { from {opacity:0;transform:translate3d(0,13px,0);filter:blur(2px)} to {opacity:1;transform:translate3d(0,0,0);filter:blur(0)} }
+@keyframes ficoesa-item-v2 { from {opacity:0;transform:translate3d(0,16px,0) scale(.985)} to {opacity:1;transform:translate3d(0,0,0) scale(1)} }
+@keyframes ficoesa-modal-v2 { from {opacity:0;transform:translate3d(0,13px,0) scale(.975)} to {opacity:1;transform:translate3d(0,0,0) scale(1)} }
+@keyframes ficoesa-shade-v2 { from {opacity:0} to {opacity:1} }
+@keyframes ficoesa-image-v2 { from {opacity:.4} to {opacity:1} }
+#main.page-enter > .page-h, #main.page-enter > .hero, #main.page-enter > .crumbs, #main.page-enter > .soon-hero {
+ animation:ficoesa-page-v2 390ms var(--motion-ease) both;
+}
+#main.page-enter :is(.acc,.pcard,.year-card,.cat-card,.month-card,.camp-card,.panel-box,.media-card,.brand-tile,.stat,.catalog-card,.model-card,.day-item) {
+ animation:ficoesa-item-v2 480ms var(--motion-ease) both;
+}
+#main.page-enter :is(.acc,.pcard,.year-card,.cat-card,.month-card,.camp-card,.panel-box,.media-card,.brand-tile,.stat,.catalog-card,.model-card):nth-child(2) { animation-delay:38ms }
+#main.page-enter :is(.acc,.pcard,.year-card,.cat-card,.month-card,.camp-card,.panel-box,.media-card,.brand-tile,.stat,.catalog-card,.model-card):nth-child(3) { animation-delay:75ms }
+#main.page-enter :is(.acc,.pcard,.year-card,.cat-card,.month-card,.camp-card,.panel-box,.media-card,.brand-tile,.stat,.catalog-card,.model-card):nth-child(4) { animation-delay:110ms }
+#main.page-enter :is(.acc,.pcard,.year-card,.cat-card,.month-card,.camp-card,.panel-box,.media-card,.brand-tile,.stat,.catalog-card,.model-card):nth-child(n+5) { animation-delay:135ms }
+:where(.acc,.pcard,.year-card,.cat-card,.month-card,.camp-card,.panel-box,.media-card,.brand-tile,.catalog-card,.model-card,.btn,.atab,.mtab,.nav-i,.thumbs button,.ev,.lr,.day-item) {
+ transition:transform var(--motion-mid) var(--motion-ease),box-shadow var(--motion-mid) var(--motion-ease),background-color var(--motion-fast) ease,border-color var(--motion-fast) ease,opacity var(--motion-fast) ease,color var(--motion-fast) ease;
+}
+:where(.acc,.pcard,.year-card,.cat-card,.month-card,.camp-card,.media-card,.brand-tile,.catalog-card,.model-card):hover:not(:disabled) {
+ transform:translate3d(0,-4px,0);box-shadow:0 12px 28px rgba(0,0,0,.17);
+}
+:where(.acc,.pcard,.year-card,.cat-card,.month-card,.camp-card,.media-card,.brand-tile,.catalog-card,.model-card):active:not(:disabled) {transform:translate3d(0,-1px,0) scale(.995)}
+:where(.btn,.atab,.mtab):active:not(:disabled) { transform:scale(.965) }
+:where(.pcard,.media-card,.acc,.year-card,.cat-card,.camp-card,.brand-tile,.catalog-card,.model-card) img { transition:transform 600ms var(--motion-ease),opacity 250ms ease; }
+:where(.pcard,.media-card,.year-card,.camp-card,.catalog-card,.model-card):hover img { transform:scale(1.035); }
+.pc-img img { object-fit:contain; }
+.nav-i[aria-current="page"] { box-shadow:inset 3px 0 0 var(--color-primary); }
+input:focus,select:focus,textarea:focus { transition:border-color 180ms ease,box-shadow 180ms ease; }
+input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0 0 3px rgba(253,197,6,.12); }
+.overlay.on .ov-bg { animation:ficoesa-shade-v2 200ms ease-out both; }
+.overlay.on :is(.modal,.drawer,.lb) { animation:ficoesa-modal-v2 350ms var(--motion-ease) both; }
+.overlay.on .lb-stage img,.gal-main img { animation:ficoesa-image-v2 260ms ease-out both; }
+.login-screen { animation:ficoesa-page-v2 560ms var(--motion-ease) both; }
+.sidebar { transition:transform 360ms var(--motion-ease); }
+#toast.on { transition:opacity 230ms ease,transform 380ms var(--motion-ease); }
+@media (prefers-reduced-motion:reduce) {
+ *,*::before,*::after { animation:none!important;transition:none!important;scroll-behavior:auto!important; }
+}
+
 </style>
 
 <div class="app">
