@@ -1530,6 +1530,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     var active = route.name === 'pub' ? (from && from.name !== 'buscar' ? from.name : '') : (isAdm(route.name) ? 'adm-resumen' : route.name);
     var h = items.map(function (i) { return '<button type="button" class="nav-i" data-act="nav" data-r="' + i[0] + '"' + (active === i[0] ? ' aria-current="page"' : '') + '>' + ic(i[1], 20) + i[2] + '' + '</button>'; }).join('') + '<button type="button" class="nav-i" data-act="focus-search">' + ic('search', 20) + 'Buscador</button>';
     if (authState === 'admin') h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="nav" data-r="adm-resumen"' + (active === 'adm-resumen' ? ' aria-current="page"' : '') + '>' + ic('admin', 20) + 'Administración</button><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + 'Cerrar sesión</button>'; else h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + 'Cerrar sesión</button>';
+    h += '<div class="nav-sep"></div><a class="nav-i" href="./connect/" style="text-decoration:none">' + ic('dir',20) + 'FICOESA Connect ↗</a>';
     h += '<div class="nav-sep"></div><a class="nav-i" href="./intro/" style="text-decoration:none">' + ic('home',20) + 'Volver a la intro ↗</a>';
     $('nav').innerHTML = h;
   }
