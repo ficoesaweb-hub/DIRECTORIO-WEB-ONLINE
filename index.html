@@ -1848,4 +1848,88 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
 })();
 </script>
 
+
+<!-- FICOESA / Guía de navegación con preguntas predefinidas, sin servicios externos. -->
+<style>
+#fh-help-button{position:fixed;bottom:18px;right:18px;z-index:10500;width:46px;height:46px;border:1px solid #191b18;border-radius:50%;background:#fdc506;color:#171717;display:grid;place-items:center;font:800 21px Montserrat,Arial,sans-serif;box-shadow:0 7px 24px #0005;cursor:pointer;transition:transform .2s ease}
+#fh-help-button:hover{transform:scale(1.08)}
+#fh-help-panel{position:fixed;right:18px;bottom:75px;z-index:10501;width:min(370px,calc(100vw - 24px));max-height:min(570px,calc(100dvh - 98px));display:none;flex-direction:column;overflow:hidden;background:#202522;border:1px solid #59625a;border-radius:17px;box-shadow:0 20px 60px #0009;color:#f4f5f1;font:13px/1.55 Montserrat,Arial,sans-serif}
+#fh-help-panel.fh-open{display:flex;animation:fh-enter .2s ease-out}
+@keyframes fh-enter{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+#fh-help-panel .fh-head{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#2e342f;border-bottom:1px solid #50584f;padding:13px 15px}
+#fh-help-panel .fh-head-inner{display:flex;align-items:center;gap:9px}
+#fh-help-panel .fh-monogram{width:31px;height:31px;border-radius:50%;background:#fdc506;color:#171717;display:grid;place-items:center;font-size:16px;font-weight:900}
+#fh-help-panel .fh-head strong{display:block;font-size:12px;letter-spacing:.03em}
+#fh-help-panel .fh-head small{display:block;color:#b2bdb2;font-size:9px;letter-spacing:.08em}
+#fh-help-close{background:#414741;color:white;border:1px solid #667063;border-radius:50%;width:29px;height:29px;cursor:pointer;font-size:19px;line-height:1}
+#fh-help-content{overflow-y:auto;min-height:180px;padding:16px;overscroll-behavior:contain}
+#fh-help-panel .fh-eyebrow{font-size:10px;font-weight:800;color:#fdc506;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+#fh-help-panel .fh-title{font-size:17px;font-weight:800;line-height:1.3;margin:0 0 9px}
+#fh-help-panel .fh-intro{color:#d4dcd3;font-size:12px;margin:0 0 14px;line-height:1.75}
+#fh-help-panel .fh-options{display:flex;flex-direction:column;gap:7px}
+#fh-help-panel .fh-option{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;padding:11px 12px;background:#343c35;color:#f8f9f4;border:1px solid #515e52;border-radius:10px;text-align:left;font:600 12px/1.4 Montserrat,Arial,sans-serif;cursor:pointer}
+#fh-help-panel .fh-option:hover{background:#444e45;border-color:#fdc506}
+#fh-help-panel .fh-option span:last-child{font-size:17px;color:#fdc506;flex:none}
+#fh-help-panel .fh-answer{padding:13px 14px;background:#333b34;border:1px solid #4d5c4e;border-radius:12px;color:#eef2eb;font-size:12px;line-height:1.8;white-space:pre-line}
+#fh-help-panel .fh-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 15px;border-top:1px solid #4d564b;background:#2b312c}
+#fh-help-panel .fh-back{border:1px solid #6b766a;border-radius:8px;color:#f3f5f1;background:transparent;padding:8px 11px;font:600 11px Montserrat,Arial,sans-serif;cursor:pointer}
+#fh-help-panel .fh-home{border:0;border-radius:8px;background:#fdc506;color:#171717;padding:9px 12px;font:800 11px Montserrat,Arial,sans-serif;cursor:pointer}
+#fh-help-panel button:focus-visible,#fh-help-button:focus-visible{outline:3px solid #faff7a;outline-offset:2px}
+body.login-mode #fh-help-button,body.login-mode #fh-help-panel{display:none!important}
+@media(max-width:500px){#fh-help-button{bottom:13px;right:13px}#fh-help-panel{right:8px;bottom:68px;width:calc(100vw - 16px);max-height:calc(100dvh - 82px)}}
+@media(prefers-reduced-motion:reduce){#fh-help-panel.fh-open{animation:none}#fh-help-button{transition:none}}
+</style>
+<button id="fh-help-button" type="button" aria-label="Abrir guía de Creative Hub" aria-controls="fh-help-panel" aria-expanded="false" title="Guía de Creative Hub">?</button>
+<section id="fh-help-panel" role="dialog" aria-label="Guía de Creative Hub" aria-modal="false">
+ <div class="fh-head"><div class="fh-head-inner"><div class="fh-monogram">?</div><div><strong>GUÍA CREATIVE HUB</strong><small>PREGUNTAS FRECUENTES</small></div></div><button type="button" id="fh-help-close" aria-label="Cerrar guía">×</button></div>
+ <div id="fh-help-content" aria-live="polite"></div>
+ <div class="fh-footer"><button type="button" class="fh-back" id="fh-help-back">← Volver</button><button type="button" class="fh-home" id="fh-help-home">Inicio</button></div>
+</section>
+<script>
+(function(){
+ 'use strict';
+ var root=document.getElementById('fh-help-panel');
+ var launcher=document.getElementById('fh-help-button');
+ var content=document.getElementById('fh-help-content');
+ var back=document.getElementById('fh-help-back');
+ var home=document.getElementById('fh-help-home');
+ var close=document.getElementById('fh-help-close');
+ // Cada respuesta se revisa desde aquí; el asistente no usa IA ni permite escribir.
+ var data={
+  main:{title:'¿Qué quieres saber?',intro:'Esta guía explica cómo utilizar el Directorio y dónde encontrar la información. Elige un tema:',items:[['organizacion','¿Cómo funciona el Directorio?'],['calendario','Calendario y campañas'],['busqueda','Buscar y descargar contenido'],['connect','¿Para qué sirve FICOESA Connect?'],['repositorio','¿Qué es el repositorio?']]},
+  organizacion:{title:'El Directorio',intro:'Distintas maneras de encontrar la misma información.',items:[['org_todo','¿Una publicación aparece en todas las secciones?'],['org_vistas','¿Por qué hay varias opciones en el Directorio?'],['org_elegir','¿Qué sección me conviene consultar?']]},
+  org_todo:{title:'¿Dónde aparece una publicación?',answer:'Cuando se sube una publicación, la información se vuelca automáticamente en los diferentes apartados del Directorio. No es necesario cargarla varias veces para verla organizada de distintas maneras.'},
+  org_vistas:{title:'Las secciones no duplican el trabajo',answer:'Las opciones del Directorio son diferentes formas de organizar y consultar la información. En general contienen la misma base de publicaciones, presentada según distintos criterios. No son departamentos que haya que completar por separado.'},
+  org_elegir:{title:'Busca según lo que priorices',answer:'Puedes elegir la vista que mejor responda a tu pregunta: si importa cuándo se publicará, consulta el calendario; si buscas una campaña concreta, utiliza el buscador; si te interesa un modelo o una categoría, navega por esa organización del Directorio.'},
+  calendario:{title:'Calendario y campañas',intro:'Las campañas están conectadas con sus fichas informativas.',items:[['cal_click','¿Qué ocurre al pulsar una campaña del calendario?'],['cal_links','¿Todas las campañas tienen un enlace?'],['cal_nofecha','¿Dónde están las publicaciones sin fecha?'],['cal_stats','¿Qué significan los datos bajo el calendario?']]},
+  cal_click:{title:'Haz clic en una campaña',answer:'Al pulsar una publicación del calendario, accedes a su página o ficha con la información completa de la campaña. El calendario no es solo un recordatorio de fechas: también sirve como acceso a los materiales y detalles.'},
+  cal_links:{title:'Campañas hipervinculadas',answer:'Las campañas están hipervinculadas para que puedas abrir sus fichas desde los puntos de acceso del Directorio. Puedes pasar de una vista resumida al detalle sin buscar el archivo manualmente.'},
+  cal_nofecha:{title:'Publicaciones pendientes de fecha',answer:'Las publicaciones que todavía no tienen una fecha programada aparecen debajo del calendario, en una sección separada. Así puedes localizarlas aunque aún no tengan día de publicación.'},
+  cal_stats:{title:'Analítica del calendario',answer:'Debajo del calendario encontrarás un resumen analítico con el número de publicaciones y otros indicadores de planificación. Sirve para tener una visión rápida del volumen y la organización del contenido.'},
+  busqueda:{title:'Buscar y descargar',intro:'Accede directamente al contenido que necesitas.',items:[['bus_search','¿Dónde está la barra de búsqueda?'],['bus_imagen','¿Cómo descargo una imagen?'],['bus_ruta','¿Qué hago si no encuentro una publicación?']]},
+  bus_search:{title:'Barra de búsqueda',answer:'El Directorio dispone de una barra de búsqueda para localizar contenido sin recorrer todas las secciones. Utilízala cuando conozcas el nombre, la campaña o alguna referencia relacionada.'},
+  bus_imagen:{title:'Descargar una imagen',answer:'Cuando estés viendo una imagen de una publicación, haz clic derecho sobre ella y selecciona «Guardar imagen como…» (o la opción equivalente de tu navegador). Puedes guardarla directamente desde la página.'},
+  bus_ruta:{title:'Más de una forma de encontrarla',answer:'Prueba primero con la barra de búsqueda. Si no recuerdas el nombre exacto, navega por fecha, campaña, producto o categoría: las vistas organizan la misma información desde perspectivas distintas.'},
+  connect:{title:'FICOESA Connect',intro:'No es un chat para conversaciones cotidianas.',items:[['con_uso','¿Para qué debemos utilizar Connect?'],['con_correccion','¿Puedo dejar una corrección o propuesta?'],['con_prioridad','¿Puedo proponer prioridades para campañas?'],['con_nochat','¿Es como WhatsApp o Teams?']]},
+  con_uso:{title:'Un portal de información y seguimiento',answer:'FICOESA Connect es un espacio para dejar de forma ordenada información relevante que deba quedar registrada, consultarse y tener seguimiento. Está pensado para gestiones importantes relacionadas con el trabajo y las campañas.'},
+  con_correccion:{title:'Correcciones y ajustes',answer:'Puedes utilizar Connect para dejar constancia de correcciones que quieras solicitar, cambios que haya que revisar o indicaciones importantes sobre una campaña. Procura explicar qué debe corregirse y a qué contenido se refiere.'},
+  con_prioridad:{title:'Prioridades de campañas',answer:'Connect también sirve para comunicar qué campañas queréis priorizar y dejar esa información organizada en su canal correspondiente, de forma que el equipo pueda consultarla posteriormente.'},
+  con_nochat:{title:'No sustituye el chat cotidiano',answer:'Connect NO es un servicio de mensajería al uso como WhatsApp o Teams. Evita utilizarlo para saludos, conversaciones informales o mensajes sin trascendencia. Resérvalo para correcciones, prioridades y gestiones importantes.'},
+  repositorio:{title:'El repositorio de la web',intro:'No necesitas entrar en GitHub para utilizar Creative Hub.',items:[['repo_que','¿Qué es el repositorio?'],['repo_uso','¿Tengo que modificar archivos en GitHub?']]},
+  repo_que:{title:'¿Qué guarda el repositorio?',answer:'El repositorio de GitHub contiene los archivos con los que funciona esta web: su estructura, diseño y código. Es distinto de las campañas y publicaciones que consultas dentro de Creative Hub.'},
+  repo_uso:{title:'Uso normal de Creative Hub',answer:'No tienes que entrar en GitHub para consultar campañas, buscar publicaciones o abrir sus imágenes. Los cambios técnicos del repositorio corresponden a quienes mantienen la web.'}
+ };
+ var history=['main'];
+ function el(tag,cls,value){var node=document.createElement(tag);if(cls)node.className=cls;if(value!==undefined)node.textContent=value;return node}
+ function render(){var key=history[history.length-1],page=data[key];content.replaceChildren();content.appendChild(el('div','fh-eyebrow',key==='main'?'BIENVENIDO':'GUÍA / '+history.length+' NIVEL'+(history.length===1?'':'ES')));content.appendChild(el('h3','fh-title',page.title));if(page.intro)content.appendChild(el('p','fh-intro',page.intro));if(page.answer)content.appendChild(el('div','fh-answer',page.answer));if(page.items){var wrap=el('div','fh-options');page.items.forEach(function(item){var btn=el('button','fh-option');btn.type='button';btn.appendChild(el('span','',item[1]));btn.appendChild(el('span','','›'));btn.addEventListener('click',function(){history.push(item[0]);render()});wrap.appendChild(btn)});content.appendChild(wrap)}back.disabled=history.length===1;back.style.visibility=history.length===1?'hidden':'visible';content.scrollTop=0}
+ function openPanel(open){root.classList.toggle('fh-open',open);launcher.setAttribute('aria-expanded',String(open));if(open){render();close.focus()}else launcher.focus()}
+ launcher.addEventListener('click',function(){openPanel(!root.classList.contains('fh-open'))});close.addEventListener('click',function(){openPanel(false)});
+ back.addEventListener('click',function(){if(history.length>1){history.pop();render()}});
+ home.addEventListener('click',function(){history=['main'];render()});
+ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&root.classList.contains('fh-open'))openPanel(false)});
+ document.addEventListener('click',function(e){if(root.classList.contains('fh-open')&&!root.contains(e.target)&&!launcher.contains(e.target))openPanel(false)});
+ render();
+})();
+</script>
+
 </body></html>
