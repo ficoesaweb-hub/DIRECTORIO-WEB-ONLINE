@@ -36,6 +36,8 @@
   // Firma por lotes: evita abrir decenas de peticiones a Storage en paralelo.
   var privateUrls = Object.create(null);
   var signingInProgress = null;
+  var lastSignatureRefresh = 0;
+  var signedUrlMaxEntries = 2200;
   async function refreshImageUrls(ids) {
     // Mantener los enlaces validos dentro de la sesion.
     var unique = Array.from(new Set((ids || []).filter(Boolean))).filter(function (id) {
@@ -50,16 +52,29 @@
     }
     signingInProgress = (async function () {
       await requireAllowed();
+      // La portada de cada campana viaja primero en la lista recibida.
       for (var offset = 0; offset < unique.length; offset += 20) {
         var batch = unique.slice(offset, offset + 20);
         // Una solicitud de Storage por cada 20 imagenes, en vez de una por imagen.
         var response = await bucket.createSignedUrls(batch, 3600);
+        // Un 429 temporal no debe dejar sin miniaturas todas las campanas.
+        if (response.error && (response.error.status === 429 || /rate limit|too many/i.test(response.error.message || ''))) {
+          await new Promise(function (resolve) { setTimeout(resolve, 1100); });
+          response = await bucket.createSignedUrls(batch, 3600);
+        }
         if (response.error) throw response.error;
         (response.data || []).forEach(function (entry) {
           if (entry && entry.signedUrl && entry.path) {
             privateUrls[entry.path] = { url: entry.signedUrl, expires: Date.now() + 3500 * 1000 };
           }
         });
+        // Ceder el control del navegador entre lotes de Storage.
+        if (offset + 20 < unique.length) await new Promise(function (resolve) { setTimeout(resolve, 45); });
+      }
+      lastSignatureRefresh = Date.now();
+      var keys = Object.keys(privateUrls);
+      if (keys.length > signedUrlMaxEntries) {
+        keys.forEach(function (key) { if (privateUrls[key].expires <= Date.now()) delete privateUrls[key]; });
       }
     })();
     try { await signingInProgress; }

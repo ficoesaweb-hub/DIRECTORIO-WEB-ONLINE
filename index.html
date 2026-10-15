@@ -799,7 +799,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   function pubList(list) {
     var h = '<div class="list-wrap"><div class="list-inner list"><div class="lh"><span></span><span>Referencia</span><span>Título</span><span>Grupo</span><span>Fecha</span><span>Marca</span><span>Imág.</span><span>Estado</span></div>';
     list.forEach(function (p) {
-      h += '<button type="button" class="lr" data-act="open-pub" data-id="' + esc(p.id) + '"><img src="' + cover(p) + '" alt="" loading="lazy"><span class="ref">' + esc(p.ref) + '</span><span class="ttl">' + esc(p.title) + '</span><span>' + esc(gl(gk(p))) + '</span><span>' + fmtShort(p.refDate) + '</span><span>' + catTag(p.cat) + '</span><span>' + p.nImg + '</span><span>' + statusLabel(p.status) + '</span></button>';
+      h += '<button type="button" class="lr" data-act="open-pub" data-id="' + esc(p.id) + '"><img loading="lazy" src="' + cover(p) + '" alt="" loading="lazy"><span class="ref">' + esc(p.ref) + '</span><span class="ttl">' + esc(p.title) + '</span><span>' + esc(gl(gk(p))) + '</span><span>' + fmtShort(p.refDate) + '</span><span>' + catTag(p.cat) + '</span><span>' + p.nImg + '</span><span>' + statusLabel(p.status) + '</span></button>';
     });
     return h + '</div></div>';
   }
@@ -909,7 +909,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     return '<div class="ov-bg" data-act="close-overlay"></div><div class="drawer" role="dialog" aria-modal="true" aria-label="Publicaciones del ' + d.d + ' de ' + MONTHS[d.m] + '"><div class="drawer-h"><div><p class="eyebrow">' + plural(list.length, 'publicación', 'publicaciones') + '</p><h2>' + wd + ' ' + d.d + ' de ' + MONTHS[d.m] + ' de ' + d.y + '</h2></div><button type="button" class="btn icon-only" id="ov-close" data-act="close-overlay" aria-label="Cerrar">' + ic('x') + '</button></div><div class="day-list">' +
       list.map(function (x) {
         var p = PUB_BY[x.pubId];
-        return '<button type="button" class="day-item" data-act="open-pub" data-id="' + esc(p.id) + '"><img src="' + cover(p) + '" alt=""><span class="dt"><b>' + esc(p.title) + '</b><span>' + catTag(p.cat) + '</span><span class="note">' + esc(gl(gk(p))) + ' · ' + (x.net ? NETS[x.net].name : 'Sin red asignada') + '</span>' + statusLabel(x.status) + '</span></button>';
+        return '<button type="button" class="day-item" data-act="open-pub" data-id="' + esc(p.id) + '"><img loading="lazy" src="' + cover(p) + '" alt=""><span class="dt"><b>' + esc(p.title) + '</b><span>' + catTag(p.cat) + '</span><span class="note">' + esc(gl(gk(p))) + ' · ' + (x.net ? NETS[x.net].name : 'Sin red asignada') + '</span>' + statusLabel(x.status) + '</span></button>';
       }).join('') + '</div></div>';
   }
 
@@ -1807,7 +1807,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     catch (e) { toast(errText(e), true); }
   }
   var unsubscribeCollection = null;
+  var lastCollectionStart = 0;
+  var snapshotToken = 0;
   function startCollection() {
+    lastCollectionStart = Date.now();
+    var collectionToken = ++snapshotToken;
     if (unsubscribeCollection) { unsubscribeCollection(); unsubscribeCollection = null; }
     if (authState !== 'admin' && authState !== 'viewer') return;
     DB = window.FICOESA_BACKEND.db; dbState = 'loading';
@@ -1815,10 +1819,18 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     unsubscribeCollection = DB.collection('campaigns').onSnapshot(async function (snap) {
       try {
         var campaigns = snap.docs.map(function (d) { var o = Object.assign({}, d.data()); o.id = d.id; return o; });
-        var imageIds = []; campaigns.forEach(function (c) { (c.images || []).forEach(function (im) { if (im.id) imageIds.push(im.id); }); });
+        // Primero las portadas: mantener miniaturas visuales, incluso en conexiones lentas.
+        var imageIds = [];
+        campaigns.forEach(function (c) {
+          var images = c.images || [];
+          var coverId = c.coverId || (images[0] && images[0].id);
+          if (coverId) imageIds.push(coverId);
+        });
+        campaigns.forEach(function (c) { (c.images || []).forEach(function (im) { if (im.id) imageIds.push(im.id); }); });
         // Un fallo temporal de Storage no debe ocultar las campanas de la base de datos.
         try { await window.FICOESA_BACKEND.refreshImageUrls(imageIds); }
         catch (imageError) { console.warn('Storage temporalmente saturado: las campanas siguen disponibles.', imageError); }
+        if (collectionToken !== snapshotToken) return;
         CAMPAIGNS = campaigns; dbState = 'ready'; onData();
       } catch (e) { console.error(e); dbState = 'error'; render(); }
     }, function (e) { console.error(e); dbState = 'error'; render(); });
@@ -1840,7 +1852,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     render();
   }
 
-  document.addEventListener('visibilitychange', function () { if (!document.hidden && (authState === 'viewer' || authState === 'admin')) startCollection(); });
+  // Evitar reconectar en cada cambio de pestaña; Realtime sigue conectado.
+  // Una reconexion tras inactividad prolongada recupera cambios perdidos.
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && (authState === 'viewer' || authState === 'admin') && Date.now() - lastCollectionStart > 10 * 60 * 1000) startCollection();
+  });
   $('menu-btn').innerHTML = ic('menu', 20);
   route = parseHash();
   render();
