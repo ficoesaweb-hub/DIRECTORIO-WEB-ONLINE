@@ -1861,7 +1861,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
 #fh-help-panel .fh-monogram{width:31px;height:31px;border-radius:50%;background:#fdc506;color:#171717;display:grid;place-items:center;font-size:16px;font-weight:900}
 #fh-help-panel .fh-head strong{display:block;font-size:12px;letter-spacing:.03em}
 #fh-help-panel .fh-head small{display:block;color:#b2bdb2;font-size:9px;letter-spacing:.08em}
-#fh-help-close{background:#414741;color:white;border:1px solid #667063;border-radius:50%;width:29px;height:29px;cursor:pointer;font-size:19px;line-height:1}
+#fh-help-close{display:flex;align-items:center;justify-content:center;flex:0 0 30px;box-sizing:border-box;margin:0;padding:0;background:#414741;color:white;border:1px solid #667063;border-radius:50%;width:30px;height:30px;cursor:pointer;font:400 22px/1 Arial,sans-serif;text-align:center;appearance:none}
 #fh-help-content{overflow-y:auto;min-height:180px;padding:16px;overscroll-behavior:contain}
 #fh-help-panel .fh-eyebrow{font-size:10px;font-weight:800;color:#fdc506;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
 #fh-help-panel .fh-title{font-size:17px;font-weight:800;line-height:1.3;margin:0 0 9px}
@@ -1883,7 +1883,7 @@ body.login-mode #fh-help-button,body.login-mode #fh-help-panel{display:none!impo
 <section id="fh-help-panel" role="dialog" aria-label="Guía de Creative Hub" aria-modal="false">
  <div class="fh-head"><div class="fh-head-inner"><div class="fh-monogram">?</div><div><strong>GUÍA CREATIVE HUB</strong><small>PREGUNTAS FRECUENTES</small></div></div><button type="button" id="fh-help-close" aria-label="Cerrar guía">×</button></div>
  <div id="fh-help-content" aria-live="polite"></div>
- <div class="fh-footer"><button type="button" class="fh-back" id="fh-help-back">← Volver</button><button type="button" class="fh-home" id="fh-help-home">Inicio</button></div>
+ <div class="fh-footer"><button type="button" class="fh-back" id="fh-help-back">← Volver</button><button type="button" class="fh-home" id="fh-help-home">Tengo otra pregunta</button></div>
 </section>
 <script>
 (function(){
@@ -1923,11 +1923,11 @@ body.login-mode #fh-help-button,body.login-mode #fh-help-panel{display:none!impo
  function el(tag,cls,value){var node=document.createElement(tag);if(cls)node.className=cls;if(value!==undefined)node.textContent=value;return node}
  function render(){var key=history[history.length-1],page=data[key];content.replaceChildren();content.appendChild(el('div','fh-eyebrow',key==='main'?'BIENVENIDO':'GUÍA / '+history.length+' NIVEL'+(history.length===1?'':'ES')));content.appendChild(el('h3','fh-title',page.title));if(page.intro)content.appendChild(el('p','fh-intro',page.intro));if(page.answer)content.appendChild(el('div','fh-answer',page.answer));if(page.items){var wrap=el('div','fh-options');page.items.forEach(function(item){var btn=el('button','fh-option');btn.type='button';btn.appendChild(el('span','',item[1]));btn.appendChild(el('span','','›'));btn.addEventListener('click',function(){history.push(item[0]);render()});wrap.appendChild(btn)});content.appendChild(wrap)}back.disabled=history.length===1;back.style.visibility=history.length===1?'hidden':'visible';content.scrollTop=0}
  function openPanel(open){root.classList.toggle('fh-open',open);launcher.setAttribute('aria-expanded',String(open));if(open){render();close.focus()}else launcher.focus()}
- launcher.addEventListener('click',function(){openPanel(!root.classList.contains('fh-open'))});close.addEventListener('click',function(){openPanel(false)});
+ launcher.addEventListener('click',function(){openPanel(true)});close.addEventListener('click',function(){openPanel(false)});
  back.addEventListener('click',function(){if(history.length>1){history.pop();render()}});
  home.addEventListener('click',function(){history=['main'];render()});
- document.addEventListener('keydown',function(e){if(e.key==='Escape'&&root.classList.contains('fh-open'))openPanel(false)});
- document.addEventListener('click',function(e){if(root.classList.contains('fh-open')&&!root.contains(e.target)&&!launcher.contains(e.target))openPanel(false)});
+ // La guia solamente se cierra al pulsar su X. Seleccionar respuestas,
+ // pulsar fuera o usar Escape no modifica la visibilidad de la ventana.
  render();
 })();
 </script>
