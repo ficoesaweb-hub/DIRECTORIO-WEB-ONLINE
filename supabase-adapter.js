@@ -33,15 +33,37 @@
     var role = await currentRole();
     if (role !== 'admin' && role !== 'viewer') throw new Error('Tu cuenta no está autorizada en FICOESA Creative Hub.');
   }
+  // Firma por lotes: evita abrir decenas de peticiones a Storage en paralelo.
   var privateUrls = Object.create(null);
+  var signingInProgress = null;
   async function refreshImageUrls(ids) {
-    await requireAllowed();
-    var unique = Array.from(new Set((ids || []).filter(Boolean)));
-    var calls = unique.map(async function (id) {
-      var d = assert(await bucket.createSignedUrl(id, 3600));
-      privateUrls[id] = { url: d.signedUrl, expires: Date.now() + 3500 * 1000 };
+    // Mantener los enlaces validos dentro de la sesion.
+    var unique = Array.from(new Set((ids || []).filter(Boolean))).filter(function (id) {
+      return !privateUrls[id] || privateUrls[id].expires <= Date.now();
     });
-    await Promise.all(calls);
+    if (!unique.length) return;
+    // Serializar tambien llamadas solapadas de sincronizacion.
+    if (signingInProgress) {
+      await signingInProgress;
+      unique = unique.filter(function (id) { return !privateUrls[id] || privateUrls[id].expires <= Date.now(); });
+      if (!unique.length) return;
+    }
+    signingInProgress = (async function () {
+      await requireAllowed();
+      for (var offset = 0; offset < unique.length; offset += 20) {
+        var batch = unique.slice(offset, offset + 20);
+        // Una solicitud de Storage por cada 20 imagenes, en vez de una por imagen.
+        var response = await bucket.createSignedUrls(batch, 3600);
+        if (response.error) throw response.error;
+        (response.data || []).forEach(function (entry) {
+          if (entry && entry.signedUrl && entry.path) {
+            privateUrls[entry.path] = { url: entry.signedUrl, expires: Date.now() + 3500 * 1000 };
+          }
+        });
+      }
+    })();
+    try { await signingInProgress; }
+    finally { signingInProgress = null; }
   }
   function privateImage(id) {
     var item = privateUrls[id];

@@ -1815,7 +1815,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       try {
         var campaigns = snap.docs.map(function (d) { var o = Object.assign({}, d.data()); o.id = d.id; return o; });
         var imageIds = []; campaigns.forEach(function (c) { (c.images || []).forEach(function (im) { if (im.id) imageIds.push(im.id); }); });
-        await window.FICOESA_BACKEND.refreshImageUrls(imageIds);
+        // Un fallo temporal de Storage no debe ocultar las campanas de la base de datos.
+        try { await window.FICOESA_BACKEND.refreshImageUrls(imageIds); }
+        catch (imageError) { console.warn('Storage temporalmente saturado: las campanas siguen disponibles.', imageError); }
         CAMPAIGNS = campaigns; dbState = 'ready'; onData();
       } catch (e) { console.error(e); dbState = 'error'; render(); }
     }, function (e) { console.error(e); dbState = 'error'; render(); });
