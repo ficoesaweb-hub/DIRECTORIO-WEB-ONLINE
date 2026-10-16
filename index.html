@@ -630,7 +630,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   /* ---------- Origen de datos único: db (campañas) y assets (imágenes) ---------- */
   var DB = null, ASSETS = null, USER = null, MYID = null;
   var dbState = 'loading';           /* loading | ready | nodb | error */
-  var authState = 'checking';        /* checking | admin | viewer */
+  var authState = 'checking';        /* checking | admin | visitante | viewer | comenter | worker | boss */
   var CAMPAIGNS = [], ALL = [], PUBS = [], POSTS = [], PUB_BY = {}, hasDemo = false;
 
   function toPub(c) {
@@ -656,10 +656,15 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     p.type = p.nImg > 1 ? 'Carrusel' : 'Imagen';
     return p;
   }
+  function validRole(role) { return ['admin','visitante','viewer','comenter','worker','boss'].indexOf(role) !== -1; }
+  function canEnter() { return validRole(authState); }
+  function canComment() { return authState === 'admin' || authState === 'comenter'; }
+  function canAccessTools() { return ['admin','worker','boss'].indexOf(authState) !== -1; }
+  function canAccessConnect() { return ['admin','comenter','worker','boss'].indexOf(authState) !== -1; }
   function rebuild() {
-    ALL = CAMPAIGNS.map(toPub);
+    ALL = CAMPAIGNS.filter(function(c){ return authState !== 'visitante' || c.status === 'publicada'; }).map(toPub);
     PUB_BY = {}; ALL.forEach(function (p) { PUB_BY[p.id] = p; });
-    PUBS = ALL.filter(function (p) { return !p.archived; });
+    PUBS = ALL.filter(function (p) { return !p.archived && (authState !== 'visitante' || p.status === 'publicada'); });
     POSTS = []; PUBS.forEach(function (p) { p.events.forEach(function (e) { POSTS.push(e); }); });
     hasDemo = ALL.some(function (p) { return p.demo; });
     $('demo-flag').hidden = !hasDemo;
@@ -1008,7 +1013,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   var FORLI_MASTER_ERROR = '';
   async function forliMasterLoad() {
     var backend = window.FICOESA_BACKEND;
-    if (!backend || !backend.client || (authState !== 'admin' && authState !== 'viewer')) return;
+    if (!backend || !backend.client || !canEnter()) return;
     try {
       var result = await backend.client.from('ficoesa_forli_catalog').select('id,gama,modelo').order('gama');
       if (result.error) throw result.error;
@@ -1223,6 +1228,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     if (p.demo) h += '<p class="demo-note">Imagen de demostración generada para esta maqueta.</p>';
     h += '</div><div><div class="f-head"><div>' + catTag(p.cat) + '</div><h1>' + esc(p.title) + '</h1><div class="f-meta"><span class="ref">' + esc(p.ref) + '</span><span>' + esc(gl(gk(p))) + '</span><span>' + fmtDate(p.refDate) + '</span>' + statusLabel(p.status) + '</div>' +
       '<div class="f-actions"><button type="button" class="btn" data-act="back">' + ic('back', 16) + 'Volver</button><button type="button" class="btn primary" data-act="copy-link">' + ic('copy', 16) + 'Copiar enlace interno</button>' + (authState === 'admin' ? '<button type="button" class="btn" data-act="adm-edit" data-id="' + esc(p.id) + '">' + ic('edit', 16) + 'Editar campaña</button>' : '') + '</div><div id="link-box"></div></div>';
+    if (p.status === 'pendiente' && authState !== 'visitante') {
+      h += '<section class="f-sec" id="campaign-comments-anchor"><div id="campaign-comments-actions">' +
+        (canComment() ? '<button class="btn" type="button" data-act="comment-new" data-id="' + esc(p.id) + '">+ Añadir corrección</button>' : '') +
+        '<span id="campaign-comment-badge" style="margin-left:10px"></span></div></section>';
+    }
     if(p.cat==='forli' && p.doc.forli){var ff=p.doc.forli;h+='<section class="f-sec"><h2>Modelos y gamas FORLI</h2><p class="note">'+esc((ff.fullGamas||[]).map(function(g){return 'Gama completa: '+g;}).concat((ff.models||[]).map(function(m){return m.name+' ('+m.group+')';})).join(' · ')||'Sin modelos asignados')+'</p></section>';}
     h += '<section class="f-sec"><h2>Explicación de la campaña</h2><blockquote class="copy">' + esc(p.desc || 'Sin explicación.') + '</blockquote></section>';
     var dims = p.images.length && p.images[p.coverIdx].w ? p.images[p.coverIdx].w + ' × ' + p.images[p.coverIdx].h + ' px' : (p.demo ? '1080 × 1350 px (demostración)' : '—');
@@ -1492,7 +1502,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   /* ---------- Render principal ---------- */
   var lastAnimatedRoute = null;
   function render(focusId) {
-    if (authState !== 'admin' && authState !== 'viewer') {
+    if (!canEnter()) {
       lastAnimatedRoute = null;
       document.body.classList.add('login-mode');
       $('sidebar').hidden = true; $('main').innerHTML = renderAccessGate(); $('pagename').textContent = 'Acceso privado'; $('search-form').hidden = true; return;
@@ -1523,6 +1533,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     $('pagename').textContent = PAGES[route.name] || 'Inicio';
     buildNav();
     if (route.name === 'adm-usuarios') loadAllowedUsers();
+    if (route.name === 'pub' && PUB_BY[route.id] && PUB_BY[route.id].status === 'pendiente') loadCommentBadge(route.id);
     if (focusId && $(focusId)) $(focusId).focus();
   }
   function buildNav() {
@@ -1530,7 +1541,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     var active = route.name === 'pub' ? (from && from.name !== 'buscar' ? from.name : '') : (isAdm(route.name) ? 'adm-resumen' : route.name);
     var h = items.map(function (i) { return '<button type="button" class="nav-i" data-act="nav" data-r="' + i[0] + '"' + (active === i[0] ? ' aria-current="page"' : '') + '>' + ic(i[1], 20) + i[2] + '' + '</button>'; }).join('') + '<button type="button" class="nav-i" data-act="focus-search">' + ic('search', 20) + 'Buscador</button>';
     if (authState === 'admin') h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="nav" data-r="adm-resumen"' + (active === 'adm-resumen' ? ' aria-current="page"' : '') + '>' + ic('admin', 20) + 'Administración</button><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + 'Cerrar sesión</button>'; else h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + 'Cerrar sesión</button>';
-    h += '<div class="nav-sep"></div><a class="nav-i" href="./connect/" style="text-decoration:none">' + ic('dir',20) + 'FICOESA Connect ↗</a>';
+    if (canAccessConnect()) h += '<div class="nav-sep"></div><a class="nav-i" href="./connect/" style="text-decoration:none">' + ic('dir',20) + 'FICOESA Connect ↗</a>';
+    if (canAccessTools()) h += '<a class="nav-i" href="./herramientas/" style="text-decoration:none">' + ic('box',20) + 'Caja de Herramientas ↗</a>';
     h += '<div class="nav-sep"></div><a class="nav-i" href="./intro/" style="text-decoration:none">' + ic('home',20) + 'Volver a la intro ↗</a>';
     $('nav').innerHTML = h;
   }
@@ -1595,6 +1607,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       case 'login': openLogin(); break;
       case 'users-add': addAllowedUser(); break;
       case 'users-remove': removeAllowedUser(d.email); break;
+      case 'comment-new': commentPrompt(d.id, null); break;
+      case 'comment-open': openCommentPanel(d.id); break;
+      case 'comment-reply': commentPrompt(d.id, d.comment); break;
+      case 'comment-toggle': toggleComment(d.id,d.comment,d.resolved === 'true'); break;
       case 'logout': window.FICOESA_BACKEND.signOut().then(function () { authState = 'guest'; CAMPAIGNS = []; rebuild(); ASSETS = null; render(); toast('Sesión cerrada'); }, function (e) { toast(errText(e), true); }); break;
       case 'nav': closeMenu(); query = ''; $('q').value = ''; if (d.r === 'adm-nueva') { resetForm(); route = { name: 'inicio', id: null }; } go(d.r); break;
       case 'menu-open': $('sidebar').classList.add('open'); $('scrim').classList.add('on'); break;
@@ -1657,6 +1673,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     }
   }
 
+  document.addEventListener('change', function(e){ if(e.target.matches('[data-role-email]')) changeAllowedUserRole(e.target.getAttribute('data-role-email'),e.target.value); });
   document.addEventListener('click', function (e) { var t = e.target.closest ? e.target.closest('[data-act]') : null; if (!t) return; act(t.getAttribute('data-act'), t); });
   document.addEventListener('input', function(e) {
     if (e.target && e.target.id === 'cat-query') {
@@ -1747,7 +1764,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     try {
       await window.FICOESA_BACKEND.signIn($('auth-email').value.trim(), $('auth-pass').value);
       var role = await window.FICOESA_BACKEND.role();
-      if (role !== 'admin' && role !== 'viewer') {
+      if (!validRole(role)) {
         await window.FICOESA_BACKEND.signOut(); throw new Error('El correo no está autorizado. Contacta con el administrador.');
       }
       authState = role;
@@ -1756,9 +1773,75 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     } catch (e) { box.textContent = errText(e); }
   }
   document.addEventListener('submit', function (e) { if (e.target.id === 'auth-form') { e.preventDefault(); submitLogin(); } });
+  /* Comentarios: solo en fichas pendientes del Directorio. */
+  var commentCache = Object.create(null);
+  async function getComments(id) {
+    var p = PUB_BY[id];
+    if (!p || p.status !== 'pendiente' || authState === 'visitante') return [];
+    var r = await window.FICOESA_BACKEND.client.from('campaign_comments')
+      .select('id,campaign_id,user_id,parent_id,content,resolved,created_at')
+      .eq('campaign_id', id).order('created_at',{ascending:true});
+    if (r.error) throw r.error;
+    commentCache[id] = r.data || [];
+    return commentCache[id];
+  }
+  async function loadCommentBadge(id) {
+    try {
+      var rows = await getComments(id);
+      if (route.name !== 'pub' || route.id !== id) return;
+      var badge = $('campaign-comment-badge');
+      if (!badge) return;
+      badge.innerHTML = rows.length ? '<button type="button" class="btn" data-act="comment-open" data-id="'+esc(id)+'">Correcciones ('+rows.length+') · Ver anexo →</button>' : '';
+    } catch(e) { console.warn('Comentarios no disponibles',e); }
+  }
+  async function commentPrompt(id,parentId) {
+    if (!canComment()) return;
+    var text = window.prompt(parentId ? 'Responder a la corrección:' : 'Nueva corrección para esta campaña:');
+    if (text === null) return;
+    text = text.trim();
+    if (!text || text.length > 3000) { toast('Escribe entre 1 y 3000 caracteres.',true); return; }
+    try {
+      var me = await window.FICOESA_BACKEND.client.auth.getUser();
+      if (!me.data || !me.data.user) throw new Error('Inicia sesión de nuevo.');
+      var r = await window.FICOESA_BACKEND.client.from('campaign_comments').insert({
+        campaign_id:id,user_id:me.data.user.id,parent_id:parentId || null,content:text
+      });
+      if(r.error) throw r.error;
+      await loadCommentBadge(id);
+      await openCommentPanel(id);
+      toast('Corrección guardada');
+    } catch(e) { toast(errText(e),true); }
+  }
+  async function toggleComment(id,commentId,resolved) {
+    if (!canComment()) return;
+    try {
+      var r = await window.FICOESA_BACKEND.client.from('campaign_comments')
+        .update({resolved:!resolved}).eq('id',commentId).eq('campaign_id',id);
+      if (r.error) throw r.error;
+      await openCommentPanel(id);
+      await loadCommentBadge(id);
+    } catch(e) {toast(errText(e),true);}
+  }
+  async function openCommentPanel(id) {
+    try {
+      var rows = await getComments(id);
+      if(!PUB_BY[id] || PUB_BY[id].status !== 'pendiente') return;
+      function item(c, nested) {
+        return '<div style="margin:10px 0 '+(nested?'10px 20px':'10px 0')+';border:1px solid #d8d8d8;border-radius:12px;padding:14px;background:var(--panel,#fff)">'+
+          '<div style="font-size:12px;opacity:.7">'+esc(new Date(c.created_at).toLocaleString('es-ES'))+' · '+esc(c.user_id.slice(0,8))+'</div>'+
+          '<p style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(c.content)+'</p>'+
+          (!nested ? '<div class="row">'+(canComment()?'<button class="btn sm" data-act="comment-toggle" data-id="'+esc(id)+'" data-comment="'+esc(c.id)+'" data-resolved="'+c.resolved+'">'+(c.resolved?'✓ Resuelta · Reabrir':'☐ Marcar realizada')+'</button><button class="btn sm" data-act="comment-reply" data-id="'+esc(id)+'" data-comment="'+esc(c.id)+'">Responder</button>':'<span class="note">'+(c.resolved?'✓ Resuelta':'Pendiente')+'</span>')+'</div>' : '')+'</div>';
+      }
+      var roots = rows.filter(function(c){return !c.parent_id;});
+      var html = '<div class="ov-bg" data-act="close-overlay"></div><aside class="modal" role="dialog" aria-modal="true" aria-label="Anexo de correcciones" style="position:absolute;right:0;top:0;bottom:0;max-height:none;height:100%;width:min(520px,100vw);overflow:auto;border-radius:16px 0 0 16px"><div class="row" style="justify-content:space-between;align-items:center"><h2>Correcciones ('+rows.length+')</h2><button class="btn" data-act="close-overlay">Cerrar ×</button></div><p class="note">Anexo de publicación pendiente. Se elimina al publicarla o tras 15 días.</p>'+
+        (canComment()?'<button class="btn primary" data-act="comment-new" data-id="'+esc(id)+'">+ Nueva corrección</button>':'')+
+        (roots.length ? roots.map(function(c){return item(c,false)+rows.filter(function(r){return r.parent_id===c.id;}).map(function(r){return item(r,true);}).join('');}).join(''):'<p>No hay correcciones.</p>')+'</aside>';
+      openOverlay(html);
+    } catch(e) { toast('No se pudieron cargar las correcciones: '+errText(e),true); }
+  }
   function renderAdmUsuarios() {
     var g = adminGate(); if (g) return admHead('Usuarios autorizados') + g;
-    return admHead('Usuarios autorizados', 'Agrega o revoca correos electrónicos de consulta. Para poder entrar, cada persona también necesita una cuenta creada en Supabase Authentication.') +
+    return admHead('Usuarios autorizados', 'Gestiona los seis perfiles de Creative Hub. Connect mantiene su propia whitelist independiente. Para poder entrar, cada persona también necesita una cuenta creada en Supabase Authentication.') +
       '<section class="panel-box" style="max-width:780px"><h3>Añadir correo a la whitelist</h3><div class="field"><label for="new-allowed-email">Correo electrónico</label><input id="new-allowed-email" class="in" type="email" placeholder="persona@empresa.com"></div>' +
       '<div><button class="btn primary" type="button" data-act="users-add">Autorizar correo</button></div><p class="note">La autorización no envía invitaciones ni crea contraseñas. Debes dar de alta al usuario también en Authentication → Users de Supabase.</p>' +
       '<div id="allowed-users-list">Cargando whitelist…</div></section>';
@@ -1782,6 +1865,17 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     var r = await whitelistClient().from('ficoesa_allowed_users').upsert({email:email,role:'viewer'},{onConflict:'email',ignoreDuplicates:true});
     if (r.error) throw r.error;
   }
+  var roleOptions = ['admin','visitante','viewer','comenter','worker','boss'];
+  async function whitelistChangeRole(email, role) {
+    if (roleOptions.indexOf(role) === -1) throw new Error('Rol no válido');
+    var r = await whitelistClient().rpc('ficoesa_cambiar_rol', {p_email:email,p_nuevo_rol:role});
+    if (r.error) throw r.error;
+  }
+  async function changeAllowedUserRole(email, role) {
+    if (!confirm('¿Asignar el rol ' + role.toUpperCase() + ' a ' + email + '?')) { await loadAllowedUsers(); return; }
+    try { await whitelistChangeRole(email, role); await loadAllowedUsers(); toast('Rol actualizado'); }
+    catch(e) { await loadAllowedUsers(); toast(errText(e), true); }
+  }
   async function whitelistRemove(email) {
     var r = await whitelistClient().from('ficoesa_allowed_users').delete().eq('email', String(email||'').trim().toLowerCase()).eq('role','viewer');
     if (r.error) throw r.error;
@@ -1793,7 +1887,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       var rows = await whitelistList();
       target.innerHTML = '<h3>Correos autorizados (' + rows.length + ')</h3><div class="list">' + rows.map(function (x) {
         return '<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)"><span style="overflow-wrap:anywhere">' + esc(x.email) + ' · ' + esc(x.role) + '</span>' +
-          (x.email === 'ficoesaweb@gmail.com' || x.role === 'admin' ? '<span class="note">Administración</span>' : '<button class="btn sm danger" data-act="users-remove" data-email="' + esc(x.email) + '">Revocar</button>') + '</div>';
+          '<span class="note">Rol: </span><select class="in" aria-label="Rol de ' + esc(x.email) + '" data-role-email="' + esc(x.email) + '" style="width:auto;max-width:165px">' + roleOptions.map(function(r){ return '<option value="'+r+'"'+(r===x.role?' selected':'')+'>'+r.toUpperCase()+'</option>'; }).join('') + '</select>' + (x.role === 'admin' ? '' : '<button class="btn sm danger" data-act="users-remove" data-email="' + esc(x.email) + '">Revocar</button>') + '</div>';
       }).join('') + '</div>';
     } catch (e) { target.textContent = 'No se pudo consultar la whitelist: ' + errText(e); }
   }
@@ -1813,7 +1907,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     lastCollectionStart = Date.now();
     var collectionToken = ++snapshotToken;
     if (unsubscribeCollection) { unsubscribeCollection(); unsubscribeCollection = null; }
-    if (authState !== 'admin' && authState !== 'viewer') return;
+    if (!canEnter()) return;
     DB = window.FICOESA_BACKEND.db; dbState = 'loading';
     forliMasterLoad();
     unsubscribeCollection = DB.collection('campaigns').onSnapshot(async function (snap) {
@@ -1841,7 +1935,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     try {
       authState = await backend.role();
       if (authState === 'admin') { ASSETS = backend.assets; var u = await backend.getUser(); MYID = u ? u.id : null; }
-      if (authState === 'admin' || authState === 'viewer') startCollection();
+      if (canEnter()) startCollection();
     } catch (e) { console.error(e); authState = 'guest'; }
     backend.client.auth.onAuthStateChange(function (event) {
       if (event === 'SIGNED_OUT') {
@@ -1855,7 +1949,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   // Evitar reconectar en cada cambio de pestaña; Realtime sigue conectado.
   // Una reconexion tras inactividad prolongada recupera cambios perdidos.
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden && (authState === 'viewer' || authState === 'admin') && Date.now() - lastCollectionStart > 10 * 60 * 1000) startCollection();
+    if (!document.hidden && canEnter() && Date.now() - lastCollectionStart > 10 * 60 * 1000) startCollection();
   });
   $('menu-btn').innerHTML = ic('menu', 20);
   route = parseHash();

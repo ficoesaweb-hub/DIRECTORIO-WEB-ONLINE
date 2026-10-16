@@ -21,17 +21,18 @@
     var data = assert(await client.rpc('is_ficoesa_admin'));
     if (data !== true) throw new Error('La cuenta no tiene permisos de administrador en Supabase.');
   }
+  var validRoles = ['admin','visitante','viewer','comenter','worker','boss'];
   async function currentRole() {
     var res = await client.auth.getUser();
     if (res.error || !res.data || !res.data.user) return 'guest';
-    var admin = assert(await client.rpc('is_ficoesa_admin')) === true;
-    if (admin) return 'admin';
-    var allowed = assert(await client.rpc('is_ficoesa_allowed')) === true;
-    return allowed ? 'viewer' : 'denied';
+    var roleResult = await client.rpc('ficoesa_my_role');
+    if (roleResult.error) throw roleResult.error;
+    var role = roleResult.data;
+    return validRoles.indexOf(role) !== -1 ? role : 'denied';
   }
   async function requireAllowed() {
     var role = await currentRole();
-    if (role !== 'admin' && role !== 'viewer') throw new Error('Tu cuenta no está autorizada en FICOESA Creative Hub.');
+    if (validRoles.indexOf(role) === -1) throw new Error('Tu cuenta no está autorizada en FICOESA Creative Hub.');
   }
   // Firma por lotes: evita abrir decenas de peticiones a Storage en paralelo.
   var privateUrls = Object.create(null);
