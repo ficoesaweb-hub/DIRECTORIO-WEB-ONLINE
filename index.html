@@ -322,6 +322,8 @@
   .comment-thread { min-height:0; overflow-y:auto; overscroll-behavior:contain; display:flex; flex-direction:column; gap:12px; padding:0 4px 2px 0; scrollbar-width:thin; scrollbar-color:#777 #303332; }
   .comment-thread__block { display:flex; flex-direction:column; gap:8px; flex:none; }
   .comment-card { display:flex; flex-direction:column; gap:9px; min-width:0; padding:13px 14px; background:#383c3a; color:#fff; border:1px solid #59605c; border-radius:11px; }
+  .comment-drawer .comment-delete { color:#ffd4d4; border-color:#a25e5e; }
+  .comment-drawer .comment-delete:hover { color:#fff; border-color:#e37b7b; background:#633636; }
   .comment-card.is-reply { margin-left:18px; border-left:3px solid #fdc506; background:#323734; }
   .comment-card.is-resolved { border-color:#81956c; }
   .comment-meta { font-size:.7rem; color:#c4ccc5; font-weight:550; }
@@ -1652,6 +1654,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       case 'comment-open': openCommentPanel(d.id); break;
       case 'comment-reply': commentPrompt(d.id, d.comment); break;
       case 'comment-toggle': toggleComment(d.id,d.comment,d.resolved === 'true'); break;
+      case 'comment-delete': deleteResolvedComment(d.id,d.comment); break;
       case 'logout': window.FICOESA_BACKEND.signOut().then(function () { authState = 'guest'; CAMPAIGNS = []; rebuild(); ASSETS = null; render(); toast('Sesión cerrada'); }, function (e) { toast(errText(e), true); }); break;
       case 'nav': closeMenu(); query = ''; $('q').value = ''; if (d.r === 'adm-nueva') { resetForm(); route = { name: 'inicio', id: null }; } go(d.r); break;
       case 'menu-open': $('sidebar').classList.add('open'); $('scrim').classList.add('on'); break;
@@ -1863,20 +1866,42 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       await loadCommentBadge(id);
     } catch(e) {toast(errText(e),true);}
   }
+  async function deleteResolvedComment(id, commentId) {
+    if (!canComment()) return;
+    var entry = (commentCache[id] || []).find(function(c){return c.id === commentId && !c.parent_id;});
+    if (!entry || !entry.resolved) { toast('Solo puedes borrar correcciones resueltas.', true); return; }
+    if (!window.confirm('¿Eliminar definitivamente esta corrección resuelta y todas sus respuestas?')) return;
+    try {
+      var r = await window.FICOESA_BACKEND.client.from('campaign_comments')
+        .delete().eq('id', commentId).eq('campaign_id', id).eq('resolved', true).is('parent_id', null).select('id');
+      if (r.error) throw r.error;
+      if (!r.data || !r.data.length) throw new Error('No se ha podido eliminar: revisa los permisos o el estado de la corrección.');
+      await openCommentPanel(id);
+      await loadCommentBadge(id);
+      toast('Corrección resuelta eliminada');
+    } catch(e) { toast('No se pudo borrar la corrección: ' + errText(e), true); }
+  }
   async function openCommentPanel(id) {
     try {
       var rows = await getComments(id);
       if (!PUB_BY[id] || PUB_BY[id].status !== 'pendiente') return;
+      var authors = Object.create(null);
+      if (rows.length) {
+        var authorResult = await window.FICOESA_BACKEND.client.rpc('ficoesa_autores_comentarios', {p_campaign_id: id});
+        if (authorResult.error) throw authorResult.error;
+        (authorResult.data || []).forEach(function(a) { authors[a.user_id] = a.email; });
+      }
       function item(c, nested) {
         var time = new Date(c.created_at).toLocaleString('es-ES');
-        var author = c.user_id ? c.user_id.slice(0, 8) : 'Usuario';
+        var author = authors[c.user_id] || 'Usuario';
         return '<article class="comment-card' + (nested ? ' is-reply' : '') + (c.resolved ? ' is-resolved' : '') + '">' +
           '<div class="comment-meta">' + esc(time) + ' · ' + esc(author) + (nested ? ' · Respuesta' : '') + '</div>' +
           '<div class="comment-body">' + esc(c.content) + '</div>' +
           (!nested ? '<div class="comment-actions">' +
             (canComment() ?
               '<button type="button" class="btn sm" data-act="comment-toggle" data-id="' + esc(id) + '" data-comment="' + esc(c.id) + '" data-resolved="' + c.resolved + '">' + (c.resolved ? '✓ Resuelta · Reabrir' : '☐ Marcar realizada') + '</button>' +
-              '<button type="button" class="btn sm" data-act="comment-reply" data-id="' + esc(id) + '" data-comment="' + esc(c.id) + '">Responder</button>' :
+              '<button type="button" class="btn sm" data-act="comment-reply" data-id="' + esc(id) + '" data-comment="' + esc(c.id) + '">Responder</button>' +
+              (c.resolved ? '<button type="button" class="btn sm comment-delete" data-act="comment-delete" data-id="' + esc(id) + '" data-comment="' + esc(c.id) + '">Eliminar</button>' : '') :
               '<span class="comment-status' + (c.resolved ? ' is-ok' : '') + '">' + (c.resolved ? '✓ Resuelta' : 'Pendiente') + '</span>') + '</div>' : '') +
           '</article>';
       }
