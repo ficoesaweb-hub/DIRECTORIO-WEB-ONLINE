@@ -25,6 +25,9 @@
   .login-footer { text-align: center; margin-top: 22px; font-size: .75rem; color: #a9a9a9; }
   .login-loading { text-align: center; font-size: .95rem; color: var(--muted); }
   @media (max-width: 480px) { .login-card { padding: 28px 22px; } .login-brand { margin-bottom: 20px; } }
+</style><style id="connect-notifications-style">
+.connect-notification-dot {display:inline-block; flex:none; width:10px; height:10px; border-radius:50%; background:#ff6472; margin-left:auto; box-shadow:0 0 0 3px rgba(255,100,114,.13);}
+.connect-notification-dot[hidden] {display:none!important;}
 </style></head><body>
 <title>FICOESA Creative Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -657,6 +660,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="./supabase-config.js"></script>
 <script src="./supabase-adapter.js"></script>
+<script src="./connect/supabase-config.js"></script>
+<script src="./connect-notifications.js"></script>
 <script>
 (function () {
   'use strict';
@@ -1695,10 +1700,16 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     var active = route.name === 'pub' ? (from && from.name !== 'buscar' ? from.name : '') : (isAdm(route.name) ? 'adm-resumen' : route.name);
     var h = items.map(function (i) { return '<button type="button" class="nav-i" data-act="nav" data-r="' + i[0] + '"' + (active === i[0] ? ' aria-current="page"' : '') + '>' + ic(i[1], 20) + i[2] + '' + '</button>'; }).join('') + '<button type="button" class="nav-i" data-act="focus-search">' + ic('search', 20) + 'Buscador</button>';
     if (authState === 'admin') h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="nav" data-r="adm-resumen"' + (active === 'adm-resumen' ? ' aria-current="page"' : '') + '>' + ic('admin', 20) + 'Administración</button><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + 'Cerrar sesión</button>'; else h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + 'Cerrar sesión</button>';
-    if (canAccessConnect()) h += '<div class="nav-sep"></div><a class="nav-i" href="./connect/" style="text-decoration:none">' + ic('dir',20) + 'FICOESA Connect ↗</a>';
+    if (canAccessConnect()) h += '<div class="nav-sep"></div><a class="nav-i" href="./connect/" style="text-decoration:none">' + ic('dir',20) + 'FICOESA Connect ↗ <span class="connect-notification-dot" data-connect-notification hidden aria-label="Mensajes nuevos"></span></a>';
     if (canAccessTools()) h += '<a class="nav-i" href="./herramientas/" style="text-decoration:none">' + ic('box',20) + 'Caja de Herramientas ↗</a>';
     h += '<div class="nav-sep"></div><a class="nav-i" href="./intro/" style="text-decoration:none">' + ic('home',20) + 'Volver a la intro ↗</a>';
     $('nav').innerHTML = h;
+    if (canAccessConnect() && window.FICOESA_CONNECT_NOTIFICATIONS) {
+      window.FICOESA_CONNECT_NOTIFICATIONS.start(async function () {
+        var u = await window.FICOESA_BACKEND.getUser(); return u && u.email;
+      });
+      window.FICOESA_CONNECT_NOTIFICATIONS.decorate();
+    }
   }
   function onData() {
     rebuild();
