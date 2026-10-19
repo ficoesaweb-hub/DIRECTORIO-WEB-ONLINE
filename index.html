@@ -356,6 +356,27 @@
   .lb-nav.prev { left: 12px; } .lb-nav.next { right: 12px; }
   .lb-nav:hover { border-color: var(--color-primary); }
 
+
+  /* Proximamente: seguimiento editorial de campanas pendientes */
+  .up-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:23px}
+  .up-stat{background:var(--surface-1);border:1px solid var(--line);padding:18px;display:grid;gap:4px}
+  .up-stat strong{font-size:clamp(1.45rem,2.4vw,2rem);line-height:1;color:var(--color-primary)}
+  .up-stat span{font-size:.72rem;color:var(--muted)}
+  .up-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));align-items:end;gap:13px;padding:18px;background:var(--surface-1);border:1px solid var(--line);margin-bottom:24px}
+  .up-filter{display:grid;gap:6px;min-width:0}.up-filter label{font-size:.69rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+  .up-filter .in{height:39px;min-height:39px}.up-section{margin:28px 0 35px}
+  .up-section-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:17px}
+  .up-section-head h2{font-size:1.12rem;font-weight:700}.up-section-head small{color:var(--muted)}
+  .up-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,235px),1fr));gap:16px}
+  .up-card{width:100%;min-width:0;text-align:left;background:var(--surface-1);border:1px solid var(--line);display:flex;flex-direction:column;transition:border-color .18s,transform .18s}
+  .up-card:hover{border-color:var(--color-primary);transform:translateY(-2px)}
+  .up-card-img{display:block;position:relative;height:190px;background:#1a1a1a;overflow:hidden}
+  .up-card-img img{width:100%;height:100%;object-fit:contain}.up-card-count{position:absolute;top:8px;right:8px;background:#252525;color:#fdc506;font-size:.7rem;font-weight:700;padding:5px 8px;border:1px solid #fdc506}
+  .up-card-info{display:grid;gap:7px;padding:14px}.up-card-title{font-weight:700;overflow-wrap:anywhere;line-height:1.35}
+  .up-card-dates{display:grid;gap:3px;font-size:.72rem;color:var(--muted)}.up-card-foot{font-size:.75rem;color:var(--color-primary);font-weight:650;margin-top:5px}
+  .up-empty{color:var(--muted);padding:16px 18px;border:1px dashed var(--line);font-size:.85rem}
+  @media(max-width:540px){.up-stats{gap:7px}.up-stat{padding:12px}.up-stat span{font-size:.62rem}}
+
   /* Ficha */
   .ficha { display: grid; grid-template-columns: minmax(0, 480px) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: start; }
   .gal-main { position: relative; aspect-ratio: 4 / 5; background: var(--surface-1); }
@@ -703,6 +724,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   }
   function validRole(role) { return ['admin','visitante','viewer','comenter','worker','boss'].indexOf(role) !== -1; }
   function canEnter() { return validRole(authState); }
+  function canSeeUpcoming() { return ['admin','comenter','worker','boss'].indexOf(authState) !== -1; }
   function canComment() { return authState === 'admin' || authState === 'comenter'; }
   function canAccessTools() { return ['admin','worker','boss'].indexOf(authState) !== -1; }
   function canAccessConnect() { return ['admin','comenter','worker','boss'].indexOf(authState) !== -1; }
@@ -790,11 +812,13 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   var cal = { y: TY, m: TM, f: { cat: 'all', camp: 'all', net: 'all', status: 'all', type: 'all' } };
   var dir = { year: null, cat: null, month: null, camp: null, view: 'grid', sort: 'fecha-desc', hideEmpty: false };
   var adm = { q: '', cat: 'all', status: 'all' };
+  var upcomingFilter = {cat:'all',group:'all',review:'all',from:'',to:'',plannedFrom:'',plannedTo:'',q:'',order:'added-desc'};
+  var upcomingCounts = Object.create(null), upcomingLoading = false, upcomingError = '', upcomingRequest = 0;
   var gal = { id: null, idx: 0 }, lb = null, opener = null, pendingConfirm = null, F = null;
 
   /* ---------- Rutas ---------- */
   var ADM = ['resumen', 'nueva', 'gestionar', 'pendientes', 'publicadas', 'multimedia', 'usuarios'];
-  var PAGES = { inicio: 'Inicio', calendario: 'Calendario', directorio: 'Directorio', catalogo: 'Catálogo de productos', buscar: 'Búsqueda', pub: 'Ficha de publicación', 'adm-resumen': 'Administración', 'adm-nueva': 'Administración · Nueva campaña', 'adm-gestionar': 'Administración · Gestionar', 'adm-pendientes': 'Administración · Pendientes', 'adm-publicadas': 'Administración · Publicadas', 'adm-multimedia': 'Administración · Multimedia', 'adm-editar': 'Administración · Editar campaña', 'adm-usuarios': 'Administración · Usuarios autorizados' };
+  var PAGES = { inicio: 'Inicio', calendario: 'Calendario', directorio: 'Directorio', proximamente: 'Próximamente', catalogo: 'Catálogo de productos', buscar: 'Búsqueda', pub: 'Ficha de publicación', 'adm-resumen': 'Administración', 'adm-nueva': 'Administración · Nueva campaña', 'adm-gestionar': 'Administración · Gestionar', 'adm-pendientes': 'Administración · Pendientes', 'adm-publicadas': 'Administración · Publicadas', 'adm-multimedia': 'Administración · Multimedia', 'adm-editar': 'Administración · Editar campaña', 'adm-usuarios': 'Administración · Usuarios autorizados' };
   function isAdm(n) { return n.indexOf('adm-') === 0; }
   function parseHash() {
     var h = (location.hash || '').replace(/^#/, '');
@@ -802,12 +826,13 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     if (h.indexOf('admin-editar-') === 0) return { name: 'adm-editar', id: h.slice(13) };
     if (h === 'admin') return { name: 'adm-resumen', id: null };
     if (h.indexOf('admin-') === 0 && ADM.indexOf(h.slice(6)) > -1) return { name: 'adm-' + h.slice(6), id: null };
-    if (['inicio', 'calendario', 'directorio', 'catalogo'].indexOf(h) > -1) return { name: h, id: null };
+    if (['inicio', 'calendario', 'directorio', 'catalogo', 'proximamente'].indexOf(h) > -1) return { name: h, id: null };
     return { name: 'inicio', id: null };
   }
   function hashFor(name, id) { if (name === 'pub') return 'pub-' + id; if (name === 'adm-editar') return 'admin-editar-' + id; if (isAdm(name)) return 'admin-' + name.slice(4); return name; }
   function go(name, id) {
     if (route.name !== name && (route.name === 'adm-nueva' || route.name === 'adm-editar') && !(name === 'adm-editar' || name === 'adm-nueva')) resetForm();
+    if (name === 'proximamente' && !canSeeUpcoming()) name = 'inicio';
     route = { name: name, id: id || null };
     var h = hashFor(name, id);
     try { if (location.hash !== '#' + h && name !== 'buscar') location.hash = h; } catch (e) {}
@@ -815,6 +840,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   }
   window.addEventListener('hashchange', function () {
     var r = parseHash();
+    if (r.name === 'proximamente' && !canSeeUpcoming()) r = {name:'inicio',id:null};
     if (route.name === 'buscar' && !location.hash) return;
     if (r.name !== route.name || r.id !== route.id) { route = r; render(); window.scrollTo(0, 0); }
   });
@@ -1016,6 +1042,85 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       var l3 = sortPubs(pubsFor(dir), dir.sort);
       h += '<div class="toolbar">' + select('d-sort', 'Ordenar por', 'dir:sort', dir.sort, [['fecha-desc', 'Fecha (más reciente)'], ['fecha-asc', 'Fecha (más antigua)'], ['titulo', 'Título'], ['marca', 'Marca'], ['alta', 'Fecha de incorporación']]) +
         '<div class="grow"><button type="button" class="btn icon-only" data-act="dir-view" data-v="grid" aria-pressed="' + (dir.view === 'grid') + '" aria-label="Vista de cuadrícula">' + ic('grid') + '</button><button type="button" class="btn icon-only" data-act="dir-view" data-v="list" aria-pressed="' + (dir.view === 'list') + '" aria-label="Vista de lista">' + ic('list') + '</button></div></div>' + (dir.view === 'list' ? pubList(l3) : pubGrid(l3));
+    }
+    return h;
+  }
+
+
+  /* Seguimiento de pendientes: una unica consulta para los recuentos de correcciones. */
+  async function loadUpcomingCounts() {
+    if (!canSeeUpcoming() || dbState !== 'ready' || !window.FICOESA_BACKEND || !window.FICOESA_BACKEND.client) return;
+    var ids = PUBS.filter(function(p){return p.campStatus === 'pendiente';}).map(function(p){return p.id;});
+    var token = ++upcomingRequest;
+    upcomingLoading = true; upcomingError = '';
+    if (route.name === 'proximamente') render();
+    try {
+      var counts = Object.create(null);
+      if (ids.length) {
+        // Solo se transfieren IDs: no se descargan textos ni correos de comentarios.
+        var result = await window.FICOESA_BACKEND.client.from('campaign_comments').select('campaign_id').in('campaign_id',ids).limit(10000);
+        if (result.error) throw result.error;
+        (result.data || []).forEach(function(r){ counts[r.campaign_id] = (counts[r.campaign_id] || 0) + 1; });
+      }
+      if (token !== upcomingRequest) return;
+      upcomingCounts = counts;
+    } catch(e) {
+      if (token !== upcomingRequest) return;
+      upcomingError = errText(e);
+      console.warn('Recuento de correcciones en Proximamente',e);
+    } finally {
+      if (token === upcomingRequest) { upcomingLoading = false; if(route.name === 'proximamente') render(); }
+    }
+  }
+  function upcomingCard(p){
+    var count = upcomingCounts[p.id] || 0;
+    return '<button type="button" class="up-card" data-act="open-pub" data-id="'+esc(p.id)+'" aria-label="Abrir '+esc(p.title)+'">'+
+      '<span class="up-card-img"><img loading="lazy" src="'+cover(p)+'" alt="">'+(count?'<span class="up-card-count">'+count+' comentario'+(count===1?'':'s')+'</span>':'')+'</span>'+
+      '<span class="up-card-info"><span>'+catTag(p.cat)+'</span><span class="up-card-title">'+esc(p.title)+'</span>'+
+      '<span class="up-card-dates"><span>Incorporada: '+(p.addedAt?fmtShort(p.addedAt):'No registrada')+'</span><span>Publicación prevista: '+fmtShort(p.planned)+'</span>'+
+      (p.group?'<span>Grupo: '+esc(p.group)+'</span>':'')+'</span><span class="up-card-foot">Ver publicación →</span></span></button>';
+  }
+  function renderUpcoming(){
+    if (!canSeeUpcoming()) return '<section class="page-h"><h1>Acceso restringido</h1><p>No tienes permisos para acceder a Próximamente.</p></section>';
+    var h = '<div class="page-h"><p class="eyebrow">Seguimiento editorial</p><h1>Próximamente</h1><p>Publicaciones pendientes de revisión y de publicación. Consulta las correcciones y accede a cada ficha.</p></div>';
+    var gate = stateGate(); if(gate) return h+gate;
+    var pending = PUBS.filter(function(p){return p.campStatus==='pendiente';});
+    var f = upcomingFilter;
+    var groups = uniq(pending.map(function(p){return gk(p);})).sort();
+    var filtered = pending.filter(function(p){
+      var n = upcomingCounts[p.id] || 0;
+      return (f.cat==='all'||p.cat===f.cat) && (f.group==='all'||gk(p)===f.group) &&
+        (f.review==='all'||(f.review==='with'?n>0:n===0)) &&
+        (!f.from||(p.addedAt&&p.addedAt>=f.from)) && (!f.to||(p.addedAt&&p.addedAt<=f.to)) &&
+        (!f.plannedFrom||(p.planned&&p.planned>=f.plannedFrom)) && (!f.plannedTo||(p.planned&&p.planned<=f.plannedTo)) &&
+        (!f.q||norm([p.title,p.ref,p.group,p.desc].join(' ')).indexOf(norm(f.q))!==-1);
+    });
+    filtered.sort(function(a,b){
+      if(f.order==='planned-asc')return (a.planned||'9999').localeCompare(b.planned||'9999');
+      if(f.order==='planned-desc')return (b.planned||'').localeCompare(a.planned||'');
+      if(f.order==='added-asc')return (a.addedAt||'9999').localeCompare(b.addedAt||'9999');
+      if(f.order==='title')return a.title.localeCompare(b.title,'es');
+      return (b.addedAt||'').localeCompare(a.addedAt||'');
+    });
+    var withComments = filtered.filter(function(p){return (upcomingCounts[p.id]||0)>0;});
+    var without = filtered.filter(function(p){return !(upcomingCounts[p.id]||0);});
+    h += '<div class="up-stats"><div class="up-stat"><strong>'+pending.length+'</strong><span>Total pendientes</span></div><div class="up-stat"><strong>'+pending.filter(function(p){return (upcomingCounts[p.id]||0)>0;}).length+'</strong><span>Con comentarios</span></div><div class="up-stat"><strong>'+pending.filter(function(p){return !(upcomingCounts[p.id]||0);}).length+'</strong><span>Sin comentarios</span></div></div>';
+    h += '<div class="up-filters">'+
+      select('up-cat','Marca','up:cat',f.cat,[['all','Todas las marcas']].concat(CAT_ORDER.map(function(c){return[c,CATS[c].name];})))+
+      select('up-group','Campaña / grupo','up:group',f.group,[['all','Todos los grupos']].concat(groups.map(function(g){return[g,gl(g)];})))+
+      select('up-review','Comentarios','up:review',f.review,[['all','Todos'],['with','Con comentarios'],['without','Sin comentarios']])+
+      select('up-order','Ordenar','up:order',f.order,[['added-desc','Últimas incorporadas'],['added-asc','Primeras incorporadas'],['planned-asc','Publicación más próxima'],['planned-desc','Publicación más lejana'],['title','Título A–Z']])+
+      '<div class="up-filter"><label for="up-from">Añadida desde</label><input class="in" type="date" id="up-from" data-filter="up:from" value="'+esc(f.from)+'"></div>'+
+      '<div class="up-filter"><label for="up-to">Añadida hasta</label><input class="in" type="date" id="up-to" data-filter="up:to" value="'+esc(f.to)+'"></div>'+
+      '<div class="up-filter"><label for="up-planned-from">Publicación desde</label><input class="in" type="date" id="up-planned-from" data-filter="up:plannedFrom" value="'+esc(f.plannedFrom)+'"></div>'+
+      '<div class="up-filter"><label for="up-planned-to">Publicación hasta</label><input class="in" type="date" id="up-planned-to" data-filter="up:plannedTo" value="'+esc(f.plannedTo)+'"></div>'+
+      '<div class="up-filter"><label for="up-query">Buscar título o referencia</label><input class="in" id="up-query" value="'+esc(f.q)+'" placeholder="Buscar..."></div>'+
+      '<button type="button" class="btn" data-act="up-reset">Limpiar filtros</button></div>';
+    if(upcomingLoading) h += '<p class="note">Comprobando comentarios…</p>';
+    if(upcomingError)h += '<p class="err">No se ha podido comprobar el estado de los comentarios: '+esc(upcomingError)+'. Recarga esta sección para reintentar.</p>';
+    if (!upcomingLoading && !upcomingError) {
+      h += '<section class="up-section"><div class="up-section-head"><h2>Con comentarios</h2><small>'+withComments.length+' publicaciones</small></div>'+(withComments.length?'<div class="up-grid">'+withComments.map(upcomingCard).join('')+'</div>':'<p class="up-empty">No hay publicaciones con comentarios para estos filtros.</p>')+'</section>';
+      h += '<section class="up-section"><div class="up-section-head"><h2>Sin comentarios</h2><small>'+without.length+' publicaciones</small></div>'+(without.length?'<div class="up-grid">'+without.map(upcomingCard).join('')+'</div>':'<p class="up-empty">No hay publicaciones sin comentarios para estos filtros.</p>')+'</section>';
     }
     return h;
   }
@@ -1552,12 +1657,14 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       document.body.classList.add('login-mode');
       $('sidebar').hidden = true; $('main').innerHTML = renderAccessGate(); $('pagename').textContent = 'Acceso privado'; $('search-form').hidden = true; return;
     }
+    if (route.name === 'proximamente' && !canSeeUpcoming()) route = {name:'inicio',id:null};
     document.body.classList.remove('login-mode');
     $('sidebar').hidden = false; $('search-form').hidden = false;
     var html;
     switch (route.name) {
       case 'calendario': html = renderCalendar(); break;
       case 'directorio': html = renderDirectory(); break;
+      case 'proximamente': html = renderUpcoming(); break;
       case 'catalogo': html = renderCatalog(); break;
       case 'buscar': html = renderSearch(); break;
       case 'pub': html = renderPub(); break;
@@ -1582,7 +1689,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     if (focusId && $(focusId)) $(focusId).focus();
   }
   function buildNav() {
-    var items = [['inicio', 'home', 'Inicio'], ['calendario', 'cal', 'Calendario'], ['directorio', 'dir', 'Directorio'], ['catalogo', 'box', 'Catálogo']];
+    var items = [['inicio', 'home', 'Inicio'], ['calendario', 'cal', 'Calendario'], ['directorio', 'dir', 'Directorio']];
+    if(canSeeUpcoming()) items.push(['proximamente','cal','Próximamente']);
+    items.push(['catalogo', 'box', 'Catálogo']);
     var active = route.name === 'pub' ? (from && from.name !== 'buscar' ? from.name : '') : (isAdm(route.name) ? 'adm-resumen' : route.name);
     var h = items.map(function (i) { return '<button type="button" class="nav-i" data-act="nav" data-r="' + i[0] + '"' + (active === i[0] ? ' aria-current="page"' : '') + '>' + ic(i[1], 20) + i[2] + '' + '</button>'; }).join('') + '<button type="button" class="nav-i" data-act="focus-search">' + ic('search', 20) + 'Buscador</button>';
     if (authState === 'admin') h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="nav" data-r="adm-resumen"' + (active === 'adm-resumen' ? ' aria-current="page"' : '') + '>' + ic('admin', 20) + 'Administración</button><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + 'Cerrar sesión</button>'; else h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + 'Cerrar sesión</button>';
@@ -1593,6 +1702,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   }
   function onData() {
     rebuild();
+    if (route.name === 'proximamente' && canSeeUpcoming()) loadUpcomingCounts();
     if ((route.name === 'adm-nueva' || route.name === 'adm-editar') && F) { buildNav(); return; }   /* no pisar un formulario en curso */
     var ae = document.activeElement;
     if (ae && ae.id === 'adm-q') { if ($('adm-table')) $('adm-table').innerHTML = admTable(); buildNav(); return; }
@@ -1658,7 +1768,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       case 'comment-toggle': toggleComment(d.id,d.comment,d.resolved === 'true'); break;
       case 'comment-delete': deleteResolvedComment(d.id,d.comment); break;
       case 'logout': window.FICOESA_BACKEND.signOut().then(function () { authState = 'guest'; CAMPAIGNS = []; rebuild(); ASSETS = null; render(); toast('Sesión cerrada'); }, function (e) { toast(errText(e), true); }); break;
-      case 'nav': closeMenu(); query = ''; $('q').value = ''; if (d.r === 'adm-nueva') { resetForm(); route = { name: 'inicio', id: null }; } go(d.r); break;
+      case 'up-reset': upcomingFilter = {cat:'all',group:'all',review:'all',from:'',to:'',plannedFrom:'',plannedTo:'',q:'',order:'added-desc'}; render(); break;
+      case 'nav': if(d.r === 'proximamente' && canSeeUpcoming()) loadUpcomingCounts(); closeMenu(); query = ''; $('q').value = ''; if (d.r === 'adm-nueva') { resetForm(); route = { name: 'inicio', id: null }; } go(d.r); break;
       case 'menu-open': $('sidebar').classList.add('open'); $('scrim').classList.add('on'); break;
       case 'menu-close': closeMenu(); break;
       case 'focus-search': closeMenu(); $('q').focus(); break;
@@ -1736,6 +1847,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     if (t.getAttribute && t.getAttribute('data-p')) { postInput(t); return; }
     if (!k) return;
     var p = k.split(':');
+    if (p[0] === 'up') { upcomingFilter[p[1]]=t.value; render(); return; }
     if (p[0] === 'cal') cal.f[p[1]] = t.value;
     else if (p[0] === 'adm') { adm[p[1]] = t.value; render(t.id); return; }
     else if (p[1] === 'hideEmpty') dir.hideEmpty = t.checked;
@@ -1751,6 +1863,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   function postInput(t) { if (!F) return; var p = t.getAttribute('data-p').split(':'); F.posts[+p[0]][p[1]] = t.value; }
   document.addEventListener('input', function (e) {
     var t = e.target;
+    if (t.id === 'up-query') { upcomingFilter.q=t.value; var selection=t.selectionStart; render(); var again=$('up-query'); if(again){again.focus();again.setSelectionRange(selection,selection);} return; }
     if (t.getAttribute && t.getAttribute('data-f')) fieldInput(t);
     else if (t.getAttribute && t.getAttribute('data-p')) postInput(t);
     else if (t.id === 'adm-q') { adm.q = t.value; if ($('adm-table')) $('adm-table').innerHTML = admTable(); }
@@ -1854,6 +1967,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       });
       if(r.error) throw r.error;
       await loadCommentBadge(id);
+      if (canSeeUpcoming()) loadUpcomingCounts();
       await openCommentPanel(id);
       toast('Corrección guardada');
     } catch(e) { toast(errText(e),true); }
