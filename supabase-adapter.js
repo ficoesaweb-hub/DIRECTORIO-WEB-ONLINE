@@ -21,10 +21,30 @@
     var data = assert(await client.rpc('is_ficoesa_admin'));
     if (data !== true) throw new Error('La cuenta no tiene permisos de administrador en Supabase.');
   }
+  // Compartir verificaciones concurrentes; caducidad corta para no conservar identidades obsoletas.
+  var verifiedUser = null, verifiedAt = 0, pendingUser = null;
+  async function verifiedCurrentUser() {
+    if (verifiedUser && Date.now() - verifiedAt < 15000) return verifiedUser;
+    if (pendingUser) return pendingUser;
+    pendingUser = (async function () {
+      var data = assert(await client.auth.getUser());
+      var person = data && data.user || null;
+      verifiedUser = person;
+      verifiedAt = Date.now();
+      return person;
+    })();
+    try { return await pendingUser; }
+    finally { pendingUser = null; }
+  }
+  client.auth.onAuthStateChange(function (event) {
+    if (event === 'SIGNED_OUT' || event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'PASSWORD_RECOVERY') {
+      verifiedUser = null; verifiedAt = 0;
+    }
+  });
   var validRoles = ['admin','visitante','viewer','comenter','worker','boss'];
   async function currentRole() {
-    var res = await client.auth.getUser();
-    if (res.error || !res.data || !res.data.user) return 'guest';
+    var person = await verifiedCurrentUser();
+    if (!person) return 'guest';
     var roleResult = await client.rpc('ficoesa_my_role');
     if (roleResult.error) throw roleResult.error;
     var role = roleResult.data;
@@ -52,7 +72,7 @@
       if (!unique.length) return;
     }
     signingInProgress = (async function () {
-      await requireAllowed();
+      // Autorizacion validada al entrar; Storage mantiene sus propias politicas RLS.
       // La portada de cada campana viaja primero en la lista recibida.
       for (var offset = 0; offset < unique.length; offset += 20) {
         var batch = unique.slice(offset, offset + 20);
@@ -120,10 +140,11 @@
             } catch (e) { if (!closed && failure) failure(e); }
           }
           refresh();
-          channel = client.channel('ficoesa-campaigns-' + Math.random().toString(36).slice(2))
+          var myChannel = client.channel('ficoesa-campaigns-' + Math.random().toString(36).slice(2))
             .on('postgres_changes', { event: '*', schema: 'public', table: 'campaigns' }, refresh)
             .subscribe();
-          return function () { closed = true; if (channel) client.removeChannel(channel); };
+          channel = myChannel;
+          return function () { closed = true; client.removeChannel(myChannel); if (channel === myChannel) channel = null; };
         }
       };
     },
@@ -180,7 +201,7 @@
     refreshImageUrls: refreshImageUrls,
     allowedUsers: allowedUsers,
     role: currentRole,
-    getUser: async function () { return assert(await client.auth.getUser()).user; },
+    getUser: verifiedCurrentUser,
     signIn: async function (email, password) {
       var data = assert(await client.auth.signInWithPassword({ email: email, password: password }));
       return data.user;

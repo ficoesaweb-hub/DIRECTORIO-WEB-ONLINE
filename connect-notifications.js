@@ -4,7 +4,7 @@
 (function () {
   'use strict';
   var client = null, timer = null, started = false, checking = false, emailProvider = null;
-  var key = null, latestCount = 0;
+  var key = null, latestCount = 0, pendingPoll = null, lastPoll = 0;
   function dot() {
     document.querySelectorAll('[data-connect-notification]').forEach(function (el) {
       el.hidden = latestCount < 1;
@@ -13,8 +13,8 @@
   }
   function update(n) { latestCount = n; dot(); }
   async function poll() {
-    if (checking || document.hidden || !client) return;
-    checking = true;
+    if (checking || document.hidden || !client || Date.now() - lastPoll < 12000) return;
+    checking = true; lastPoll = Date.now();
     try {
       var identity = emailProvider ? await emailProvider() : null;
       if (!identity) { update(0); return; }
@@ -56,7 +56,8 @@
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
     });
     started = true;
-    poll();
+    // No competir con el acceso ni con la carga inicial del directorio.
+    pendingPoll = setTimeout(function () { pendingPoll = null; poll(); }, 2500);
     timer = setInterval(poll, 60000);
     document.addEventListener('visibilitychange', function () { if (!document.hidden) poll(); });
     window.addEventListener('focus', poll);
