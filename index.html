@@ -39,21 +39,31 @@
 .hub-news,.hub-board{margin:34px 0 40px}
 .hub-news .sec-h,.hub-board-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:18px}
 .hub-news .sec-h h2,.hub-board h2{font-size:clamp(1.25rem,2.5vw,1.8rem);letter-spacing:-.02em}
-.hub-carousel-wrap{display:flex;align-items:center;gap:10px}
-.hub-carousel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:1;gap:12px;min-width:0}
-.hub-carousel-arrow{flex:0 0 36px;height:48px;border:1px solid var(--line);font-size:32px;line-height:1;color:var(--text);cursor:pointer;background:var(--surface-2);border-radius:5px}
-.hub-carousel-arrow:hover{background:var(--color-primary);color:var(--on-primary)}
-.hub-news-card{min-width:0;display:block;background:var(--surface-2);border:1px solid var(--line);padding:0;text-align:left;cursor:pointer;overflow:hidden;border-radius:7px}
-.hub-news-card:hover{border-color:var(--color-primary);transform:translateY(-2px)}
-.hub-news-cover{height:clamp(130px,17vw,230px);overflow:hidden;position:relative;background:#252525}
+/* V3.1 - Carrusel continuo de las 3 publicaciones mas recientes. */
+.hub-carousel-wrap{display:flex;align-items:center;gap:12px}
+.hub-carousel{position:relative;flex:1;min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
+.hub-carousel-track{display:flex;transform:translateX(-100%);transition:transform .7s cubic-bezier(.22,.75,.2,1)}
+.hub-carousel-arrow{flex:0 0 39px;height:52px;border:1px solid var(--line);font-size:32px;line-height:1;color:var(--text);cursor:pointer;background:var(--surface-2);border-radius:7px}
+.hub-carousel-arrow:hover,.hub-carousel-arrow:focus-visible{background:var(--color-primary);color:var(--on-primary)}
+.hub-news-card{box-sizing:border-box;flex:0 0 100%;display:flex;align-items:stretch;width:100%;min-width:0;min-height:290px;text-align:left;border:0;padding:0;cursor:pointer;color:var(--text);background:var(--surface-2)}
+.hub-news-card:focus-visible{outline:3px solid var(--color-primary);outline-offset:-4px}
+.hub-news-cover{flex:0 0 56%;min-width:0;height:clamp(270px,33vw,390px);overflow:hidden;position:relative;background:#262626}
 .hub-news-cover img{height:100%;width:100%;object-fit:cover;display:block}
-.hub-news-number{position:absolute;top:10px;left:10px;background:#fdc506;color:#171717;font-size:.62rem;font-weight:800;letter-spacing:.1em;padding:7px 9px}
-.hub-news-info{padding:14px 14px 16px;min-height:126px}
-.hub-news-info h3{font-size:.9rem;line-height:1.35;margin:8px 0;font-weight:750}
-.hub-news-info>span:last-child{color:var(--muted);font-size:.73rem}
-.hub-dots{display:flex;justify-content:center;gap:8px;margin-top:15px}
-.hub-dot{border:0;background:#777;opacity:.45;width:7px;height:7px;border-radius:50%;cursor:pointer;padding:0}
-.hub-dot.on{background:var(--color-primary);opacity:1;width:20px;border-radius:5px}
+.hub-news-no-image{display:flex;align-items:center;justify-content:center;height:100%;padding:20px;text-align:center;letter-spacing:.15em;font-weight:800;color:#fdc506;background:linear-gradient(135deg,#313131,#141414)}
+.hub-news-number{position:absolute;top:16px;left:16px;background:#fdc506;color:#171717;font-size:.65rem;font-weight:800;letter-spacing:.09em;padding:9px 12px;border-radius:3px}
+.hub-news-info{flex:1;display:flex;flex-direction:column;justify-content:center;padding:clamp(20px,3vw,42px);min-width:0}
+.hub-news-info h3{font-size:clamp(1.28rem,2.3vw,2.25rem);line-height:1.17;letter-spacing:-.03em;margin:18px 0 16px;font-weight:800;overflow-wrap:anywhere}
+.hub-news-info .hub-news-ref{color:var(--muted);font-size:.78rem;line-height:1.6}
+.hub-news-info .hub-news-cta{color:var(--color-primary);font-size:.81rem;font-weight:750;margin-top:22px}
+.hub-news-controls{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:15px;min-height:32px;padding-right:54px}
+.hub-news-controls .hub-autoplay{border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--text);font-size:.72rem;padding:8px 12px;cursor:pointer;min-width:112px}
+.hub-news-controls .hub-autoplay:hover,.hub-news-controls .hub-autoplay:focus-visible{border-color:var(--color-primary)}
+.hub-dots{display:flex;justify-content:center;align-items:center;gap:9px}
+.hub-dot{border:0;background:#777;opacity:.55;width:9px;height:9px;border-radius:50%;cursor:pointer;padding:0}
+.hub-dot.on{background:var(--color-primary);opacity:1;width:26px;border-radius:5px}
+.hub-autoplay-hint{font-size:.72rem;color:var(--muted)}
+@media(max-width:740px){.hub-carousel-wrap{gap:5px}.hub-carousel-arrow{flex-basis:30px;height:43px;font-size:25px}.hub-news-card{flex-direction:column;min-height:0}.hub-news-cover{flex:auto;width:100%;height:clamp(215px,62vw,315px)}.hub-news-info{padding:19px 21px 25px}.hub-news-info h3{font-size:1.35rem;margin:12px 0}.hub-news-cta{margin-top:15px}.hub-news-controls{flex-wrap:wrap}.hub-autoplay-hint{display:none}}
+@media(prefers-reduced-motion:reduce){.hub-carousel-track{transition:none!important}}
 .hub-board{background:var(--surface-2);border:1px solid var(--line);padding:22px 23px;border-radius:8px}
 .hub-board-head p:not(.eyebrow){color:var(--muted);font-size:.8rem;margin-top:5px}
 .hub-board-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -71,7 +81,7 @@
 .hub-note-admin{padding:18px;border:1px solid var(--line);background:var(--surface-2);display:flex;gap:15px;justify-content:space-between;align-items:start}
 .hub-note-admin h3{font-size:.96rem;margin:8px 0}.hub-note-admin p{white-space:pre-wrap;color:var(--muted);font-size:.83rem}
 .hub-admin-actions{display:flex;gap:6px;flex-wrap:wrap}
-@media(max-width:740px){.hub-carousel{grid-template-columns:minmax(0,1fr)}.hub-news-card:not(:first-child){display:none}.hub-news-cover{height:240px}.hub-carousel-arrow{flex-basis:32px}.hub-board-items{grid-template-columns:1fr}.hub-board-head{align-items:start;flex-direction:column}.hub-note-admin{flex-direction:column}}
+@media(max-width:740px){.hub-board-items{grid-template-columns:1fr}.hub-board-head{align-items:start;flex-direction:column}.hub-note-admin{flex-direction:column}}
 </style>
 <style id="connect-notifications-style">
 .connect-notification-dot {display:inline-block; flex:none; width:10px; height:10px; border-radius:50%; background:#ff6472; margin-left:auto; box-shadow:0 0 0 3px rgba(255,100,114,.13);}
@@ -750,6 +760,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   var dbState = 'loading';           /* loading | ready | nodb | error */
   var authState = 'checking';        /* checking | admin | visitante | viewer | comenter | worker | boss | turista (sin sesión) */
   var HUB_NOTES = [], hubNotesError = '', noveltyIndex = 0, touristTimer = null;
+  var noveltyTimer = null, noveltyPaused = false, noveltyHoverPause = false, noveltyTrackIndex = 1, noveltyFeedKey = '';
+  var touristLoadError = '';
   var CAMPAIGNS = [], ALL = [], PUBS = [], POSTS = [], PUB_BY = {}, hasDemo = false;
 
   function toPub(c) {
@@ -937,7 +949,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   function stateGate() {
     if (dbState === 'loading') return '<p class="empty"><b>Cargando el directorio…</b>Un momento, estamos consultando las campañas guardadas.</p>';
     if (dbState === 'nodb') return '<p class="empty"><b>No se puede acceder al directorio desde esta vista.</b>Configura la URL y la clave pública de Supabase en supabase-config.js para activar las campañas.</p>';
-    if (dbState === 'error') return '<p class="empty"><b>No se han podido cargar las campañas.</b>Recarga la página. Si el problema continúa, avisa al administrador.</p>';
+    if (dbState === 'error') return '<div class="empty"><b>No se han podido cargar las campañas.</b><span>'+ (isTourist() ? 'El acceso público necesita la función segura de Supabase. Comprueba que se haya ejecutado el SQL de instalación. ' + (touristLoadError ? 'Detalle: '+esc(touristLoadError) : '') : 'Recarga la página. Si el problema continúa, avisa al administrador.') +'</span>'+(isTourist()?'<button class="btn sm primary" type="button" data-act="tourist-retry">Reintentar carga</button>':'')+'</div>';
     return null;
   }
   function emptyRepo() {
@@ -945,30 +957,106 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   }
 
   /* ---------- Novedades y tablón informativo ---------- */
+  /* El carrusel destaca tres campañas; el Directorio conserva TODAS las publicadas. */
   function recentNovelties() {
-    return PUBS.filter(function(p) { return p.status === 'publicada' && !p.archived; })
-      .sort(function(a,b) {
-        var av = a.real || a.refDate || a.addedAt || '';
-        var bv = b.real || b.refDate || b.addedAt || '';
-        return bv.localeCompare(av) || b.addedAt.localeCompare(a.addedAt);
-      }).slice(0, 9);
+    return PUBS.filter(function(p){ return p.status === 'publicada' && !p.archived; })
+      .sort(function(a,b){
+        function publishedDate(p) {
+          // Fecha real de publicacion de la campana; si falta, de sus posts publicados.
+          var networkDates=(p.posts||[]).filter(function(x){return x.status==='publicada' && x.real;}).map(function(x){return x.real;}).sort();
+          return p.real || networkDates[networkDates.length-1] || p.refDate || p.addedAt || '';
+        }
+        var av=publishedDate(a), bv=publishedDate(b);
+        return bv.localeCompare(av) || String(b.addedAt||'').localeCompare(String(a.addedAt||'')) || String(b.id).localeCompare(String(a.id));
+      }).slice(0,3);
+  }
+  function noveltyCard(p, i, clone) {
+    var img=cover(p);
+    var coverHtml=img?'<img loading="lazy" src="'+esc(img)+'" alt="Portada de '+esc(p.title)+'">':'<span class="hub-news-no-image" aria-hidden="true">FICOESA CREATIVE HUB</span>';
+    return '<button type="button" class="hub-news-card" data-act="open-pub" data-id="'+esc(p.id)+'" data-slide-index="'+i+'" tabindex="-1" aria-hidden="true">'+
+      '<div class="hub-news-cover">'+coverHtml+'<span class="hub-news-number">NOVEDAD 0'+(i+1)+' / 0'+Math.min(3,recentNovelties().length)+'</span></div>'+
+      '<div class="hub-news-info">'+catTag(p.cat)+'<h3>'+esc(p.title)+'</h3><p class="hub-news-ref">'+esc(p.ref)+' · '+esc(fmtShort(p.real||p.refDate||p.addedAt))+'</p><span class="hub-news-cta">VER PUBLICACIÓN →</span></div></button>';
   }
   function renderNovelties() {
-    var items = recentNovelties(), total = items.length;
-    var h = '<section class="sec hub-news" aria-label="Novedades de Creative Hub"><div class="sec-h"><div><p class="eyebrow">ACTUALIDAD · WORKO / FORLI</p><h2>Últimas novedades</h2></div><span class="note">Campañas publicadas recientemente</span></div>';
-    if (dbState === 'loading') return h + '<p class="empty">Cargando novedades…</p></section>';
-    if (!total) return h + '<p class="empty">Las últimas publicaciones aparecerán aquí.</p></section>';
-    noveltyIndex = ((noveltyIndex % total) + total) % total;
-    var visible = Math.min(total, 3);
-    h += '<div class="hub-carousel-wrap"><button class="hub-carousel-arrow" type="button" data-act="novelty-prev" aria-label="Novedad anterior">‹</button>';
-    h += '<div class="hub-carousel">';
-    for (var i=0;i<visible;i++) {
-      var p = items[(noveltyIndex+i)%total];
-      h += '<button type="button" class="hub-news-card" data-act="open-pub" data-id="' + esc(p.id) + '"><div class="hub-news-cover"><img loading="lazy" src="' + esc(cover(p)) + '" alt="' + esc(p.title) + '"><span class="hub-news-number">NOVEDAD 0' + (i+1) + '</span></div><div class="hub-news-info">' + catTag(p.cat) + '<h3>' + esc(p.title) + '</h3><span>' + esc(fmtShort(p.refDate || p.addedAt)) + ' · Ver campaña →</span></div></button>';
+    var items=recentNovelties(), total=items.length;
+    var h='<section class="sec hub-news" aria-label="Novedades de Creative Hub"><div class="sec-h"><div><p class="eyebrow">ACTUALIDAD · WORKO / FORLI</p><h2>Últimas novedades</h2></div><span class="note">Las 3 publicaciones más recientes</span></div>';
+    if(dbState==='loading') return h+'<p class="empty">Cargando novedades…</p></section>';
+    if(dbState==='error') return h+'<p class="empty">Las novedades estarán disponibles cuando se restablezca la lectura de campañas.</p></section>';
+    if(!total) return h+'<p class="empty">Las últimas publicaciones aparecerán aquí.</p></section>';
+    noveltyIndex=((noveltyIndex%total)+total)%total;
+    // Copias en los extremos para que el avance 3 -> 1 sea continuo y sin saltos.
+    var slides=total>1?[{p:items[total-1],i:total-1,clone:true}].concat(items.map(function(p,i){return {p:p,i:i,clone:false};}),[{p:items[0],i:0,clone:true}]):[{p:items[0],i:0,clone:false}];
+    noveltyTrackIndex=total>1?noveltyIndex+1:0;
+    h+='<div class="hub-carousel-wrap"><button class="hub-carousel-arrow" type="button" data-act="novelty-prev" aria-label="Campaña anterior"'+(total===1?' disabled':'')+'>‹</button>';
+    h+='<div class="hub-carousel" role="region" aria-roledescription="carrusel" aria-label="Últimas tres publicaciones"><div class="hub-carousel-track" style="transform:translateX(-'+(noveltyTrackIndex*100)+'%)">';
+    h+=slides.map(function(x){return noveltyCard(x.p,x.i,x.clone);}).join('');
+    h+='</div></div><button class="hub-carousel-arrow" type="button" data-act="novelty-next" aria-label="Campaña siguiente"'+(total===1?' disabled':'')+'>›</button></div>';
+    if(total>1){
+      h+='<div class="hub-news-controls"><span class="hub-autoplay-hint">Cambio automático cada 8 segundos</span><div class="hub-dots" role="group" aria-label="Seleccionar campaña">';
+      h+=items.map(function(_,i){return '<button type="button" class="hub-dot '+(i===noveltyIndex?'on':'')+'" data-act="novelty-go" data-i="'+i+'" aria-label="Ver novedad '+(i+1)+' de '+total+'" aria-pressed="'+(i===noveltyIndex)+'"></button>';}).join('');
+      h+='</div><button type="button" class="hub-autoplay" data-act="novelty-pause" aria-pressed="'+noveltyPaused+'">'+(noveltyPaused?'▶ Reanudar':'Ⅱ Pausar')+'</button></div>';
     }
-    h += '</div><button class="hub-carousel-arrow" type="button" data-act="novelty-next" aria-label="Novedad siguiente">›</button></div>';
-    if (total > 1) h += '<div class="hub-dots" role="group" aria-label="Ir a novedad">' + items.map(function(_,i) {return '<button type="button" class="hub-dot ' + (i===noveltyIndex?'on':'') + '" aria-label="Ir a novedad '+(i+1)+'" aria-pressed="'+(i===noveltyIndex)+'" data-act="novelty-go" data-i="'+i+'"></button>'; }).join('') + '</div>';
-    return h + '</section>';
+    return h+'</section>';
+  }
+  function stopNoveltyAutoplay(){if(noveltyTimer){clearInterval(noveltyTimer);noveltyTimer=null;}}
+  function noveltyMayAdvance(){
+    return route.name==='inicio' && !document.hidden && !noveltyPaused && !noveltyHoverPause &&
+      !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) && recentNovelties().length>1;
+  }
+  function startNoveltyAutoplay(){
+    stopNoveltyAutoplay();
+    if(noveltyMayAdvance()) noveltyTimer=setInterval(function(){if(noveltyMayAdvance())moveNovelty(1,false);},8000);
+  }
+  function updateNoveltySlide(animate){
+    var track=document.querySelector('.hub-carousel-track');if(!track)return;
+    if(animate===false)track.style.transition='none';else track.style.transition='';
+    track.style.transform='translateX(-'+(noveltyTrackIndex*100)+'%)';
+    var activePosition=noveltyTrackIndex;
+    Array.prototype.forEach.call(track.children,function(slide,i){
+      var on=i===activePosition;slide.tabIndex=on?0:-1;slide.setAttribute('aria-hidden',on?'false':'true');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.hub-dot'),function(dot,i){
+      var on=i===noveltyIndex;dot.classList.toggle('on',on);dot.setAttribute('aria-pressed',on?'true':'false');
+    });
+  }
+  function normalizeNoveltyTrack(){
+    var total=recentNovelties().length;
+    if(total<=1)return;
+    if(noveltyTrackIndex===0)noveltyTrackIndex=total;
+    else if(noveltyTrackIndex===total+1)noveltyTrackIndex=1;
+    else return;
+    updateNoveltySlide(false);
+    // Restaurar la transicion tras el salto invisible a la copia original.
+    var track=document.querySelector('.hub-carousel-track');if(track){void track.offsetWidth;track.style.transition='';}
+  }
+  function setNoveltyIndex(target,manual){
+    var total=recentNovelties().length;if(!total)return;
+    target=((target%total)+total)%total;
+    var previous=noveltyIndex;
+    if(total>1 && previous===total-1 && target===0)noveltyTrackIndex=total+1;
+    else if(total>1 && previous===0 && target===total-1)noveltyTrackIndex=0;
+    else noveltyTrackIndex=total>1?target+1:0;
+    noveltyIndex=target;
+    updateNoveltySlide(true);
+    if(manual)startNoveltyAutoplay();
+  }
+  function moveNovelty(delta,manual){setNoveltyIndex(noveltyIndex+delta,manual);}
+  function syncNoveltyAutoplay(){
+    stopNoveltyAutoplay();
+    if(route.name!=='inicio')return;
+    var track=document.querySelector('.hub-carousel-track');
+    if(!track)return;
+    updateNoveltySlide(false);
+    void track.offsetWidth; track.style.transition='';
+    track.addEventListener('transitionend',function(e){if(e.target===track && e.propertyName==='transform')normalizeNoveltyTrack();});
+    var area=document.querySelector('.hub-news');
+    if(area){
+      area.addEventListener('pointerenter',function(){noveltyHoverPause=true;stopNoveltyAutoplay();});
+      area.addEventListener('pointerleave',function(){noveltyHoverPause=false;startNoveltyAutoplay();});
+      area.addEventListener('focusin',function(){noveltyHoverPause=true;stopNoveltyAutoplay();});
+      area.addEventListener('focusout',function(e){if(!area.contains(e.relatedTarget)){noveltyHoverPause=false;startNoveltyAutoplay();}});
+    }
+    startNoveltyAutoplay();
   }
   function dateNice(value) { try { return value ? new Date(value).toLocaleDateString('es-ES', {day:'2-digit',month:'short',year:'numeric'}) : ''; } catch(e){ return ''; } }
   function publishedNotes() {
@@ -1041,8 +1129,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       rows.forEach(function(c){(c.images||[]).forEach(function(im){if(im.id)ids.push(im.id);});});
       try {await window.FICOESA_BACKEND.refreshImageUrls(ids);}catch(err){console.warn('Imágenes de visita no disponibles; comprueba la política de Storage.',err);}
       if (token!==snapshotToken || !isTourist()) return;
-      CAMPAIGNS=rows;dbState='ready';onData();
-    } catch(err) {if(token!==snapshotToken) return;dbState='error';console.error('Acceso turístico requiere ejecutar SQL:',err);render();}
+      CAMPAIGNS=rows;touristLoadError='';dbState='ready';onData();
+    } catch(err) {if(token!==snapshotToken) return;dbState='error';touristLoadError=errText(err);console.error('Error al cargar feed turístico; revisa SQL y permisos:',err);render();}
   }
   function startTouristFeed(token) {
     dbState='loading';CAMPAIGNS=[];rebuild();render();
@@ -1053,7 +1141,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     if (!window.FICOESA_BACKEND || !window.FICOESA_BACKEND.configured) {toast('Falta configurar Supabase.',true);return;}
     try {
       // No usamos credenciales ni rol asignado en la whitelist.
-      sessionStorage.setItem('ficoesa_turista','1');
+      try {sessionStorage.setItem('ficoesa_turista','1');} catch(e) {console.info('Sesión de visita sin persistencia: almacenamiento del navegador bloqueado.');}
       await window.FICOESA_BACKEND.signOut();
       authState='turista'; ASSETS=null;MYID=null;
       route={name:'inicio',id:null};
@@ -1831,6 +1919,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   var lastAnimatedRoute = null;
   function render(focusId) {
     if (!canEnter()) {
+      stopNoveltyAutoplay();
       lastAnimatedRoute = null;
       document.body.classList.add('login-mode');
       $('sidebar').hidden = true; $('main').innerHTML = renderAccessGate(); $('pagename').textContent = 'Acceso privado'; $('search-form').hidden = true; return;
@@ -1860,6 +1949,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     var isNewPage = lastAnimatedRoute !== routeToken;
     lastAnimatedRoute = routeToken;
     $('main').innerHTML = html;
+    syncNoveltyAutoplay();
     $('main').classList.toggle('page-enter', isNewPage);
     $('pagename').textContent = PAGES[route.name] || 'Inicio';
     buildNav();
@@ -1888,6 +1978,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   }
   function onData() {
     rebuild();
+    var latestIds=recentNovelties().map(function(p){return p.id;}).join('|');
+    if(latestIds!==noveltyFeedKey){noveltyFeedKey=latestIds;noveltyIndex=0;}
     if (route.name === 'proximamente' && canSeeUpcoming()) loadUpcomingCounts();
     if ((route.name === 'adm-nueva' || route.name === 'adm-editar') && F) { buildNav(); return; }   /* no pisar un formulario en curso */
     var ae = document.activeElement;
@@ -1992,9 +2084,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       case 'install-help': hubInstallHelp(); break;
       case 'login': openLogin(); break;
       case 'tourist-enter': enterTourist(); break;
-      case 'novelty-prev': noveltyIndex--; render(); break;
-      case 'novelty-next': noveltyIndex++; render(); break;
-      case 'novelty-go': noveltyIndex = Number(d.i) || 0; render(); break;
+      case 'novelty-prev': moveNovelty(-1,true); break;
+      case 'novelty-next': moveNovelty(1,true); break;
+      case 'novelty-go': setNoveltyIndex(Number(d.i) || 0,true); break;
+      case 'novelty-pause': noveltyPaused=!noveltyPaused; var pb=document.querySelector('.hub-autoplay');if(pb){pb.textContent=noveltyPaused?'▶ Reanudar':'Ⅱ Pausar';pb.setAttribute('aria-pressed',noveltyPaused?'true':'false');}startNoveltyAutoplay(); break;
+      case 'tourist-retry': if(isTourist()){dbState='loading';touristLoadError='';render();fetchTouristFeed(snapshotToken);}break;
       case 'hub-note-save': hubSaveNote(); break;
       case 'hub-note-edit': hubEditNote(d.id); break;
       case 'hub-note-remove': hubDeleteNote(d.id); break;
@@ -2397,6 +2491,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   // Evitar reconectar en cada cambio de pestaña; Realtime sigue conectado.
   // Una reconexion tras inactividad prolongada recupera cambios perdidos.
   document.addEventListener('visibilitychange', function () {
+    if(document.hidden)stopNoveltyAutoplay();else startNoveltyAutoplay();
     if (!document.hidden && canEnter() && Date.now() - lastCollectionStart > 10 * 60 * 1000) startCollection();
   });
   $('menu-btn').innerHTML = ic('menu', 20);
