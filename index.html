@@ -1,4 +1,9 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FICOESA Creative Hub</title>
+<meta name="theme-color" content="#252525">
+<meta name="description" content="Directorio privado de campañas, calendario y recursos WORKO / FORLI">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="shortcut icon" href="./favicon.png" type="image/png"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
   /* Acceso privado: pagina completa centrada, independiente de la barra lateral */
@@ -29,7 +34,6 @@
 .connect-notification-dot {display:inline-block; flex:none; width:10px; height:10px; border-radius:50%; background:#ff6472; margin-left:auto; box-shadow:0 0 0 3px rgba(255,100,114,.13);}
 .connect-notification-dot[hidden] {display:none!important;}
 </style></head><body>
-<title>FICOESA Creative Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap">
@@ -1432,6 +1436,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   function renderAdmResumen() {
     var g = adminGate(); if (g) return admHead('Resumen general') + g;
     var h = admHead('Resumen general', 'Indicadores calculados con las campañas guardadas.');
+    h += '<div class="hub-backup-panel"><div><strong>Respaldo de campañas</strong><span>Exporta los registros, fechas, categorías y referencias de imágenes. No incluye archivos de imagen.</span></div><div class="hub-backup-buttons"><button type="button" class="btn" data-act="hub-export-json">Descargar JSON</button><button type="button" class="btn" data-act="hub-export-csv">Descargar CSV</button></div></div>';
     var mine = PUBS.filter(function (p) { return p.refDate && p.year === TY && p.month === TM; }).length;
     var pend = PUBS.filter(function (p) { return p.campStatus === 'pendiente'; }), pub = PUBS.filter(function (p) { return p.campStatus === 'publicada'; });
     h += '<div class="stats">' + [[PUBS.length, 'Total de campañas'], [pend.length, 'Pendientes'], [pub.length, 'Publicadas'], [mine, 'Campañas del mes'], [PUBS.filter(function (p) { return p.cat === 'worko'; }).length, 'Campañas WORKO'], [PUBS.filter(function (p) { return p.cat === 'forli'; }).length, 'Campañas FORLI']].map(function (s) { return '<div class="stat"><b>' + s[0] + '</b><span>' + s[1] + '</span></div>'; }).join('') + '</div>';
@@ -1481,7 +1486,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     h += items.length ? '<div class="media-grid">' + items.map(function (x) { return '<div class="media-card"><button type="button" class="im" data-act="adm-media-open" data-id="' + esc(x.p.id) + '" data-i="' + x.i + '" aria-label="Ver imagen ampliada"><img src="' + window.FICOESA_BACKEND.publicImage(x.im.id) + '" alt="' + esc(x.im.name || 'Imagen') + '" loading="lazy"></button><b>' + esc(x.im.name || 'imagen.jpg') + '</b><span class="note">' + esc(x.p.title) + (x.im.w ? ' · ' + x.im.w + ' × ' + x.im.h + ' px' : '') + '</span></div>'; }).join('') + '</div>' : '<p class="empty">Todavía no se ha subido ninguna imagen. Las campañas de demostración no tienen archivos reales.</p>';
     setTimeout(function () {
       if (!ASSETS || !$('media-usage')) return;
-      ASSETS.list().then(function (r) { if ($('media-usage')) $('media-usage').textContent = r.usage.files + ' archivos · ' + (r.usage.bytes / 1048576).toFixed(1) + ' MB de ' + Math.round(r.usage.maxBytes / 1048576) + ' MB utilizados.'; }, function () { if ($('media-usage')) $('media-usage').textContent = 'No se ha podido consultar el espacio utilizado.'; });
+      ASSETS.list().then(function (r) { if ($('media-usage')) $('media-usage').textContent = r.usage.files + ' archivos · ' + (r.usage.bytes / 1048576).toFixed(1) + ' MB almacenados (JPG de hasta 20 MB cada uno).'; }, function () { if ($('media-usage')) $('media-usage').textContent = 'No se ha podido consultar el espacio utilizado.'; });
     }, 0);
     return h;
   }
@@ -1703,6 +1708,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     if (canAccessConnect()) h += '<div class="nav-sep"></div><a class="nav-i" href="./connect/" style="text-decoration:none">' + ic('dir',20) + 'FICOESA Connect ↗ <span class="connect-notification-dot" data-connect-notification hidden aria-label="Mensajes nuevos"></span></a>';
     if (canAccessTools()) h += '<a class="nav-i" href="./herramientas/" style="text-decoration:none">' + ic('box',20) + 'Caja de Herramientas ↗</a>';
     h += '<div class="nav-sep"></div><a class="nav-i" href="./intro/" style="text-decoration:none">' + ic('home',20) + 'Volver a la intro ↗</a>';
+    h += '<button type="button" class="nav-i" data-act="install-help">' + ic('box',20) + 'Instalar como aplicación</button>';
     $('nav').innerHTML = h;
     if (canAccessConnect() && window.FICOESA_CONNECT_NOTIFICATIONS) {
       window.FICOESA_CONNECT_NOTIFICATIONS.start(async function () {
@@ -1767,9 +1773,54 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   }
   function closeMenu() { $('sidebar').classList.remove('open'); $('scrim').classList.remove('on'); }
 
+  /* ---------- Creative Hub: exportacion administradores ---------- */
+  function hubDownload(text, filename, mime) {
+    var blob = new Blob([text], { type: mime });
+    var objectUrl = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = objectUrl; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(objectUrl); }, 1500);
+  }
+  function hubExport(format) {
+    if (authState !== 'admin' || dbState !== 'ready') { toast('Necesitas acceso de administrador y conexion activa.', true); return; }
+    var stamp = new Date().toISOString().slice(0, 10);
+    if (!CAMPAIGNS.length) { toast('Todavia no hay campanas para exportar.'); return; }
+    if (format === 'json') {
+      var payload = {format:'ficoesa-creative-hub-backup',version:1,exportedAt:new Date().toISOString(),note:'Solo metadatos. Los archivos permanecen en Supabase Storage.',campaigns:CAMPAIGNS};
+      hubDownload(JSON.stringify(payload,null,2), 'FICOESA_CAMPANAS_'+stamp+'.json', 'application/json;charset=utf-8');
+    } else {
+      var headers=['id','titulo','referencia','marca','gama','estado','archivada','fecha_prevista','fecha_real','imagenes','redes','descripcion'];
+      function csvSafe(value) {
+        var x=String(value == null ? '' : value).replace(/\r?\n/g,' ');
+        // Evita ejecutar formulas al abrir el CSV en Excel.
+        if (/^[\s]*[=+@\-]/.test(x)) x="'"+x;
+        return '"'+x.replace(/"/g,'""')+'"';
+      }
+      var rows=CAMPAIGNS.map(function(c){ return [c.id,c.title,c.ref,c.cat,c.group,c.status,!!c.archived,c.plannedDate,c.realDate,(c.images||[]).length,(c.posts||[]).map(function(p){return p.net;}).join(', '),c.description].map(csvSafe).join(';'); });
+      hubDownload('\ufeff'+headers.join(';')+'\r\n'+rows.join('\r\n'),'FICOESA_CAMPANAS_'+stamp+'.csv','text/csv;charset=utf-8');
+    }
+    toast('Exportacion preparada. Guarda el archivo en una ubicacion segura.');
+  }
+  var hubInstallEvent = null;
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); hubInstallEvent = e; });
+  window.addEventListener('appinstalled', function(){ hubInstallEvent = null; toast('Creative Hub instalado.'); });
+  function hubInstallHelp() {
+    if (hubInstallEvent) {
+      var ev=hubInstallEvent; hubInstallEvent=null;
+      ev.prompt();
+      ev.userChoice.then(function(v){ if(v.outcome !== 'accepted') toast('Puedes instalarla mas adelante desde el navegador.'); });
+    } else {
+      openOverlay('<div class="ov-bg" data-act="close-overlay"></div><section role="dialog" aria-modal="true" aria-label="Instalar Creative Hub" class="hub-install-dialog"><h2>Creative Hub en tu escritorio</h2><p>En Chrome o Edge, abre el menú del navegador y selecciona <strong>Instalar aplicación</strong> o <strong>Aplicaciones → Instalar este sitio como aplicación</strong>. En móvil, utiliza la opción <strong>Añadir a pantalla de inicio</strong> cuando esté disponible.</p><p class="note">El contenido privado sigue protegido por tu inicio de sesión y requiere conexión a Supabase.</p><button type="button" class="btn primary" data-act="close-overlay">Entendido</button></section>');
+    }
+  }
+
   function act(a, el) {
     var d = el.dataset;
     switch (a) {
+      case 'hub-export-json': hubExport('json'); break;
+      case 'hub-export-csv': hubExport('csv'); break;
+      case 'install-help': hubInstallHelp(); break;
       case 'login': openLogin(); break;
       case 'users-add': addAllowedUser(); break;
       case 'users-remove': removeAllowedUser(d.email); break;
@@ -1881,6 +1932,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   });
   document.addEventListener('submit', function (e) { if (e.target.id === 'camp-form') { e.preventDefault(); saveForm(); } });
   document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && canEnter()) { e.preventDefault(); closeMenu(); $('q').focus(); $('q').select(); return; }
     if (e.key === 'Escape') { if ($('overlay').classList.contains('on')) closeOverlay(); else closeMenu(); }
     else if (lb && e.key === 'ArrowLeft' && PUB_BY[lb.id].nImg > 1) act('lb-prev', document.body);
     else if (lb && e.key === 'ArrowRight' && PUB_BY[lb.id].nImg > 1) act('lb-next', document.body);
@@ -2252,4 +2304,11 @@ body.login-mode #fh-help-button,body.login-mode #fh-help-panel{display:none!impo
 })();
 </script>
 
+<style id="creative-hub-app-upgrades">
+.hub-backup-panel{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin:22px 0 10px;padding:19px 22px;background:rgba(253,197,6,.07);border:1px solid rgba(253,197,6,.28);border-radius:10px}
+.hub-backup-panel>div:first-child{display:grid;gap:5px}.hub-backup-panel strong{font-size:14px}.hub-backup-panel span{color:#c7c7c7;font-size:12px;line-height:1.5}.hub-backup-buttons{display:flex;gap:9px;flex-wrap:wrap}
+.hub-install-dialog{background:#2b2e2b;color:#f8f8f5;border:1px solid #71756c;border-radius:15px;position:relative;max-width:min(510px,calc(100vw - 40px));margin:auto;padding:28px;z-index:2;line-height:1.7;box-shadow:0 22px 65px #0009}.hub-install-dialog h2{margin:0 0 12px;font-size:22px}.hub-install-dialog p{font-size:13px;color:#deded7}.hub-install-dialog .btn{margin-top:9px}
+@media(prefers-reduced-motion:reduce){.page-enter *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+<script src="./pwa-register.js" defer></script>
 </body></html>

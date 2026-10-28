@@ -1,0 +1,31 @@
+{
+  "name": "FICOESA Creative Hub",
+  "short_name": "Creative Hub",
+  "description": "Repositorio interno de campañas y recursos de WORKO y FORLI",
+  "id": "./intro/",
+  "start_url": "./intro/",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#252525",
+  "theme_color": "#FDC506",
+  "lang": "es",
+  "orientation": "any",
+  "categories": [
+    "business",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

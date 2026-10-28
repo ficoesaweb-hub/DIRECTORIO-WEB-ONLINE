@@ -189,7 +189,7 @@
       var rows = assert(await bucket.list('', { limit: 1000 }));
       var files = (rows || []).filter(function (x) { return !!x.name && x.name !== '.emptyFolderPlaceholder'; });
       var bytes = files.reduce(function (sum, file) { return sum + Number((file.metadata && file.metadata.size) || 0); }, 0);
-      return { usage: { files: files.length, bytes: bytes, maxBytes: 20 * 1024 * 1024 } };
+      return { usage: { files: files.length, bytes: bytes, maxFileBytes: 20 * 1024 * 1024 } };
     }
   };
   window.FICOESA_BACKEND = {
