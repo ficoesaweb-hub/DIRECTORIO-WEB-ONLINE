@@ -39,6 +39,7 @@
   client.auth.onAuthStateChange(function (event) {
     if (event === 'SIGNED_OUT' || event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'PASSWORD_RECOVERY') {
       verifiedUser = null; verifiedAt = 0;
+      if (event === 'SIGNED_OUT' && privateUrls) Object.keys(privateUrls).forEach(function(id){delete privateUrls[id];});
     }
   });
   var validRoles = ['admin','visitante','viewer','comenter','worker','boss'];
@@ -192,8 +193,21 @@
       return { usage: { files: files.length, bytes: bytes, maxFileBytes: 20 * 1024 * 1024 } };
     }
   };
+  async function touristFeed() {
+    // Endpoint de solo lectura. Nunca consulta campaigns directamente ni usa requireAllowed().
+    // El RPC SECURITY DEFINER devuelve únicamente campos públicos y campañas publicadas.
+    var result = await client.rpc('ficoesa_tourist_feed');
+    var rows = assert(result) || [];
+    if (!Array.isArray(rows)) throw new Error('Respuesta del directorio turístico no válida.');
+    return rows.map(function (row) {
+      var pub = Object.assign({}, row.content || {});
+      pub.id = String(row.id || pub.id || '');
+      return pub;
+    }).filter(function (c) { return c.status === 'publicada' && c.archived !== true; });
+  }
   window.FICOESA_BACKEND = {
     configured: true,
+    touristFeed: touristFeed,
     client: client,
     db: db,
     assets: assets,

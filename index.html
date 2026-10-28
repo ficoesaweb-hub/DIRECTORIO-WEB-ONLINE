@@ -30,7 +30,50 @@
   .login-footer { text-align: center; margin-top: 22px; font-size: .75rem; color: #a9a9a9; }
   .login-loading { text-align: center; font-size: .95rem; color: var(--muted); }
   @media (max-width: 480px) { .login-card { padding: 28px 22px; } .login-brand { margin-bottom: 20px; } }
-</style><style id="connect-notifications-style">
+</style><style id="hub-tourist-v3">
+.tourist-entry{margin-top:23px;border-top:1px solid #515151;padding-top:17px;text-align:center}
+.tourist-divider{font-size:.73rem;color:#c4c4c4;margin-bottom:14px}
+.tourist-entry-btn{width:100%;min-height:49px;border:1px solid #fdc506!important;color:#fdc506!important;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:800;letter-spacing:.1em;background:rgba(253,197,6,.05)}
+.tourist-entry-btn:hover{background:#fdc506!important;color:#232323!important}
+.tourist-entry p{font-size:.7rem;color:#aaa;line-height:1.6;margin-top:9px}
+.hub-news,.hub-board{margin:34px 0 40px}
+.hub-news .sec-h,.hub-board-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:18px}
+.hub-news .sec-h h2,.hub-board h2{font-size:clamp(1.25rem,2.5vw,1.8rem);letter-spacing:-.02em}
+.hub-carousel-wrap{display:flex;align-items:center;gap:10px}
+.hub-carousel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:1;gap:12px;min-width:0}
+.hub-carousel-arrow{flex:0 0 36px;height:48px;border:1px solid var(--line);font-size:32px;line-height:1;color:var(--text);cursor:pointer;background:var(--surface-2);border-radius:5px}
+.hub-carousel-arrow:hover{background:var(--color-primary);color:var(--on-primary)}
+.hub-news-card{min-width:0;display:block;background:var(--surface-2);border:1px solid var(--line);padding:0;text-align:left;cursor:pointer;overflow:hidden;border-radius:7px}
+.hub-news-card:hover{border-color:var(--color-primary);transform:translateY(-2px)}
+.hub-news-cover{height:clamp(130px,17vw,230px);overflow:hidden;position:relative;background:#252525}
+.hub-news-cover img{height:100%;width:100%;object-fit:cover;display:block}
+.hub-news-number{position:absolute;top:10px;left:10px;background:#fdc506;color:#171717;font-size:.62rem;font-weight:800;letter-spacing:.1em;padding:7px 9px}
+.hub-news-info{padding:14px 14px 16px;min-height:126px}
+.hub-news-info h3{font-size:.9rem;line-height:1.35;margin:8px 0;font-weight:750}
+.hub-news-info>span:last-child{color:var(--muted);font-size:.73rem}
+.hub-dots{display:flex;justify-content:center;gap:8px;margin-top:15px}
+.hub-dot{border:0;background:#777;opacity:.45;width:7px;height:7px;border-radius:50%;cursor:pointer;padding:0}
+.hub-dot.on{background:var(--color-primary);opacity:1;width:20px;border-radius:5px}
+.hub-board{background:var(--surface-2);border:1px solid var(--line);padding:22px 23px;border-radius:8px}
+.hub-board-head p:not(.eyebrow){color:var(--muted);font-size:.8rem;margin-top:5px}
+.hub-board-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.hub-note{border-left:3px solid var(--color-primary);background:var(--surface);padding:13px 15px;min-width:0}
+.hub-note-meta{font-size:.66rem;letter-spacing:.08em;color:var(--muted)}
+.hub-note-meta strong{color:var(--color-primary)}
+.hub-note h3{font-size:.84rem;margin:6px 0 7px}
+.hub-note p{color:var(--muted);font-size:.78rem;line-height:1.6;overflow-wrap:anywhere;white-space:pre-wrap}
+.hub-note-empty{font-size:.84rem;color:var(--muted);padding:12px 0}
+.hub-editor{max-width:760px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:22px;display:grid;gap:15px}
+.hub-editor textarea{resize:vertical;min-height:125px;height:auto;padding:12px}
+.hub-note-actions{display:flex;flex-wrap:wrap;gap:22px;font-size:.8rem}
+.hub-note-actions label{display:flex;gap:9px;align-items:center}
+.hub-note-admin-list{display:grid;gap:10px}
+.hub-note-admin{padding:18px;border:1px solid var(--line);background:var(--surface-2);display:flex;gap:15px;justify-content:space-between;align-items:start}
+.hub-note-admin h3{font-size:.96rem;margin:8px 0}.hub-note-admin p{white-space:pre-wrap;color:var(--muted);font-size:.83rem}
+.hub-admin-actions{display:flex;gap:6px;flex-wrap:wrap}
+@media(max-width:740px){.hub-carousel{grid-template-columns:minmax(0,1fr)}.hub-news-card:not(:first-child){display:none}.hub-news-cover{height:240px}.hub-carousel-arrow{flex-basis:32px}.hub-board-items{grid-template-columns:1fr}.hub-board-head{align-items:start;flex-direction:column}.hub-note-admin{flex-direction:column}}
+</style>
+<style id="connect-notifications-style">
 .connect-notification-dot {display:inline-block; flex:none; width:10px; height:10px; border-radius:50%; background:#ff6472; margin-left:auto; box-shadow:0 0 0 3px rgba(255,100,114,.13);}
 .connect-notification-dot[hidden] {display:none!important;}
 </style></head><body>
@@ -705,7 +748,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   /* ---------- Origen de datos único: db (campañas) y assets (imágenes) ---------- */
   var DB = null, ASSETS = null, USER = null, MYID = null;
   var dbState = 'loading';           /* loading | ready | nodb | error */
-  var authState = 'checking';        /* checking | admin | visitante | viewer | comenter | worker | boss */
+  var authState = 'checking';        /* checking | admin | visitante | viewer | comenter | worker | boss | turista (sin sesión) */
+  var HUB_NOTES = [], hubNotesError = '', noveltyIndex = 0, touristTimer = null;
   var CAMPAIGNS = [], ALL = [], PUBS = [], POSTS = [], PUB_BY = {}, hasDemo = false;
 
   function toPub(c) {
@@ -732,15 +776,16 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     return p;
   }
   function validRole(role) { return ['admin','visitante','viewer','comenter','worker','boss'].indexOf(role) !== -1; }
-  function canEnter() { return validRole(authState); }
+  function isTourist() { return authState === 'turista'; }
+  function canEnter() { return validRole(authState) || isTourist(); }
   function canSeeUpcoming() { return ['admin','comenter','worker','boss'].indexOf(authState) !== -1; }
   function canComment() { return authState === 'admin' || authState === 'comenter'; }
   function canAccessTools() { return ['admin','worker','boss'].indexOf(authState) !== -1; }
   function canAccessConnect() { return ['admin','comenter','worker','boss'].indexOf(authState) !== -1; }
   function rebuild() {
-    ALL = CAMPAIGNS.filter(function(c){ return authState !== 'visitante' || c.status === 'publicada'; }).map(toPub);
+    ALL = CAMPAIGNS.filter(function(c){ return (authState !== 'visitante' && !isTourist()) || (c.status === 'publicada' && !c.archived); }).map(toPub);
     PUB_BY = {}; ALL.forEach(function (p) { PUB_BY[p.id] = p; });
-    PUBS = ALL.filter(function (p) { return !p.archived && (authState !== 'visitante' || p.status === 'publicada'); });
+    PUBS = ALL.filter(function (p) { return !p.archived && ((authState !== 'visitante' && !isTourist()) || p.status === 'publicada'); });
     POSTS = []; PUBS.forEach(function (p) { p.events.forEach(function (e) { POSTS.push(e); }); });
     hasDemo = ALL.some(function (p) { return p.demo; });
     $('demo-flag').hidden = !hasDemo;
@@ -826,8 +871,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   var gal = { id: null, idx: 0 }, lb = null, opener = null, pendingConfirm = null, F = null;
 
   /* ---------- Rutas ---------- */
-  var ADM = ['resumen', 'nueva', 'gestionar', 'pendientes', 'publicadas', 'multimedia', 'usuarios'];
-  var PAGES = { inicio: 'Inicio', calendario: 'Calendario', directorio: 'Directorio', proximamente: 'Próximamente', catalogo: 'Catálogo de productos', buscar: 'Búsqueda', pub: 'Ficha de publicación', 'adm-resumen': 'Administración', 'adm-nueva': 'Administración · Nueva campaña', 'adm-gestionar': 'Administración · Gestionar', 'adm-pendientes': 'Administración · Pendientes', 'adm-publicadas': 'Administración · Publicadas', 'adm-multimedia': 'Administración · Multimedia', 'adm-editar': 'Administración · Editar campaña', 'adm-usuarios': 'Administración · Usuarios autorizados' };
+  var ADM = ['resumen', 'nueva', 'gestionar', 'pendientes', 'publicadas', 'multimedia', 'avisos', 'usuarios'];
+  var PAGES = { inicio: 'Inicio', calendario: 'Calendario', directorio: 'Directorio', proximamente: 'Próximamente', catalogo: 'Catálogo de productos', buscar: 'Búsqueda', pub: 'Ficha de publicación', 'adm-resumen': 'Administración', 'adm-nueva': 'Administración · Nueva campaña', 'adm-gestionar': 'Administración · Gestionar', 'adm-pendientes': 'Administración · Pendientes', 'adm-publicadas': 'Administración · Publicadas', 'adm-multimedia': 'Administración · Multimedia', 'adm-editar': 'Administración · Editar campaña', 'adm-usuarios': 'Administración · Usuarios autorizados', 'adm-avisos': 'Administración · Avisos' };
   function isAdm(n) { return n.indexOf('adm-') === 0; }
   function parseHash() {
     var h = (location.hash || '').replace(/^#/, '');
@@ -842,6 +887,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   function go(name, id) {
     if (route.name !== name && (route.name === 'adm-nueva' || route.name === 'adm-editar') && !(name === 'adm-editar' || name === 'adm-nueva')) resetForm();
     if (name === 'proximamente' && !canSeeUpcoming()) name = 'inicio';
+    if (isTourist() && (isAdm(name) || name === 'proximamente')) name = 'inicio';
     route = { name: name, id: id || null };
     var h = hashFor(name, id);
     try { if (location.hash !== '#' + h && name !== 'buscar') location.hash = h; } catch (e) {}
@@ -849,7 +895,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   }
   window.addEventListener('hashchange', function () {
     var r = parseHash();
-    if (r.name === 'proximamente' && !canSeeUpcoming()) r = {name:'inicio',id:null};
+    if ((r.name === 'proximamente' && !canSeeUpcoming()) || (isTourist() && isAdm(r.name))) { r = {name:'inicio',id:null}; try { history.replaceState(null,'',location.pathname+location.search+'#inicio'); } catch (_) {} }
     if (route.name === 'buscar' && !location.hash) return;
     if (r.name !== route.name || r.id !== route.id) { route = r; render(); window.scrollTo(0, 0); }
   });
@@ -898,10 +944,132 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     return '<div class="empty"><b>Todavía no hay campañas en el directorio.</b><span>' + (authState === 'admin' ? 'Crea la primera desde Administración y aparecerá automáticamente en el calendario y en el directorio.' : 'Cuando el equipo de marketing publique contenido, lo verás aquí.') + '</span>' + (authState === 'admin' ? '<button type="button" class="btn primary" data-act="nav" data-r="adm-nueva">' + ic('plus', 16) + 'Nueva campaña</button>' : '') + '</div>';
   }
 
+  /* ---------- Novedades y tablón informativo ---------- */
+  function recentNovelties() {
+    return PUBS.filter(function(p) { return p.status === 'publicada' && !p.archived; })
+      .sort(function(a,b) {
+        var av = a.real || a.refDate || a.addedAt || '';
+        var bv = b.real || b.refDate || b.addedAt || '';
+        return bv.localeCompare(av) || b.addedAt.localeCompare(a.addedAt);
+      }).slice(0, 9);
+  }
+  function renderNovelties() {
+    var items = recentNovelties(), total = items.length;
+    var h = '<section class="sec hub-news" aria-label="Novedades de Creative Hub"><div class="sec-h"><div><p class="eyebrow">ACTUALIDAD · WORKO / FORLI</p><h2>Últimas novedades</h2></div><span class="note">Campañas publicadas recientemente</span></div>';
+    if (dbState === 'loading') return h + '<p class="empty">Cargando novedades…</p></section>';
+    if (!total) return h + '<p class="empty">Las últimas publicaciones aparecerán aquí.</p></section>';
+    noveltyIndex = ((noveltyIndex % total) + total) % total;
+    var visible = Math.min(total, 3);
+    h += '<div class="hub-carousel-wrap"><button class="hub-carousel-arrow" type="button" data-act="novelty-prev" aria-label="Novedad anterior">‹</button>';
+    h += '<div class="hub-carousel">';
+    for (var i=0;i<visible;i++) {
+      var p = items[(noveltyIndex+i)%total];
+      h += '<button type="button" class="hub-news-card" data-act="open-pub" data-id="' + esc(p.id) + '"><div class="hub-news-cover"><img loading="lazy" src="' + esc(cover(p)) + '" alt="' + esc(p.title) + '"><span class="hub-news-number">NOVEDAD 0' + (i+1) + '</span></div><div class="hub-news-info">' + catTag(p.cat) + '<h3>' + esc(p.title) + '</h3><span>' + esc(fmtShort(p.refDate || p.addedAt)) + ' · Ver campaña →</span></div></button>';
+    }
+    h += '</div><button class="hub-carousel-arrow" type="button" data-act="novelty-next" aria-label="Novedad siguiente">›</button></div>';
+    if (total > 1) h += '<div class="hub-dots" role="group" aria-label="Ir a novedad">' + items.map(function(_,i) {return '<button type="button" class="hub-dot ' + (i===noveltyIndex?'on':'') + '" aria-label="Ir a novedad '+(i+1)+'" aria-pressed="'+(i===noveltyIndex)+'" data-act="novelty-go" data-i="'+i+'"></button>'; }).join('') + '</div>';
+    return h + '</section>';
+  }
+  function dateNice(value) { try { return value ? new Date(value).toLocaleDateString('es-ES', {day:'2-digit',month:'short',year:'numeric'}) : ''; } catch(e){ return ''; } }
+  function publishedNotes() {
+    return HUB_NOTES.filter(function(x){return x.published;}).sort(function(a,b){return Number(!!b.pinned)-Number(!!a.pinned) || String(b.created_at).localeCompare(String(a.created_at));});
+  }
+  function renderHubBoard() {
+    var notes = publishedNotes().slice(0, 4);
+    var h = '<section class="sec hub-board" aria-label="Tablón informativo"><div class="hub-board-head"><div><p class="eyebrow">MENSAJES DEL EQUIPO</p><h2>El tablón del Hub</h2><p>Noticias, avisos y pequeñas actualizaciones del equipo de marketing.</p></div>';
+    if (authState === 'admin') h += '<button type="button" class="btn sm" data-act="nav" data-r="adm-avisos">Gestionar avisos →</button>';
+    h += '</div><div class="hub-board-items">';
+    h += notes.length ? notes.map(function(x){return '<article class="hub-note"><div class="hub-note-meta">'+(x.pinned?'<strong>FIJADO</strong> · ':'')+esc(dateNice(x.created_at))+'</div><h3>'+esc(x.title)+'</h3><p>'+esc(x.body)+'</p></article>';}).join('') : '<p class="hub-note-empty">Todavía no hay avisos publicados. Consulta este espacio para estar al día.</p>';
+    return h + '</div></section>';
+  }
+  async function hubLoadNotes() {
+    if (!canEnter() || !window.FICOESA_BACKEND || !window.FICOESA_BACKEND.client) return;
+    try {
+      var q = window.FICOESA_BACKEND.client.from('ficoesa_hub_notes').select('id,title,body,pinned,published,created_at,updated_at').order('created_at', {ascending:false}).limit(100);
+      if (authState !== 'admin') q=q.eq('published',true);
+      var r=await q;
+      if (r.error) throw r.error;
+      HUB_NOTES = r.data || []; hubNotesError = '';
+      if (route.name==='inicio' || route.name==='adm-avisos') render();
+    } catch(e) {hubNotesError=errText(e); console.warn('El tablón requiere la migración SQL: ',e); if (route.name==='adm-avisos') render();}
+  }
+  function renderAdmAvisos() {
+    var gate=adminGate(); if (gate) return gate;
+    var h=admHead('Tablón de avisos','Escribe noticias breves, comentarios y avisos para quienes visitan Creative Hub. Solo los publicados aparecerán en la portada.');
+    h += '<div class="hub-editor"><div class="field"><label for="hub-note-title">Título del aviso</label><input class="in" id="hub-note-title" maxlength="100" placeholder="Ej. Nuevas campañas disponibles"></div><div class="field"><label for="hub-note-body">Mensaje</label><textarea class="in" id="hub-note-body" rows="5" maxlength="1200" placeholder="Escribe aquí tu actualización..."></textarea></div><div class="hub-note-actions"><label><input type="checkbox" id="hub-note-published" checked> Publicar ahora</label><label><input type="checkbox" id="hub-note-pinned"> Fijar arriba</label></div><input type="hidden" id="hub-note-id"><div class="row"><button class="btn primary" type="button" data-act="hub-note-save">Guardar aviso</button><button class="btn" type="button" data-act="hub-note-new">Limpiar formulario</button></div></div>';
+    if (hubNotesError) h += '<p class="err" style="margin:16px 0">No se han podido cargar los avisos. Ejecuta la migración SQL del paquete. Detalle: '+esc(hubNotesError)+'</p>';
+    h += '<div class="sec-h" style="margin-top:24px"><h2>Avisos registrados</h2><span class="note">'+HUB_NOTES.length+' registros</span></div>';
+    h += HUB_NOTES.length ? '<div class="hub-note-admin-list">'+HUB_NOTES.map(function(n){return '<article class="hub-note-admin"><div><span class="note">'+(n.published?'PUBLICADO':'BORRADOR')+(n.pinned?' · FIJADO':'')+' · '+esc(dateNice(n.created_at))+'</span><h3>'+esc(n.title)+'</h3><p>'+esc(n.body)+'</p></div><div class="hub-admin-actions"><button class="btn sm" data-act="hub-note-edit" data-id="'+esc(n.id)+'">Editar</button><button class="btn sm danger" data-act="hub-note-remove" data-id="'+esc(n.id)+'">Eliminar</button></div></article>';}).join('')+'</div>' : '<p class="empty">Todavía no hay avisos guardados.</p>';
+    return h;
+  }
+  function hubClearEditor() {['hub-note-title','hub-note-body','hub-note-id'].forEach(function(id){if ($(id)) $(id).value='';});if ($('hub-note-published')) $('hub-note-published').checked=true;if ($('hub-note-pinned')) $('hub-note-pinned').checked=false;}
+  function hubEditNote(id) {
+    if (authState !== 'admin') return;
+    var n=HUB_NOTES.find(function(x){return x.id===id;});if (!n) return;
+    $('hub-note-id').value=n.id; $('hub-note-title').value=n.title; $('hub-note-body').value=n.body;
+    $('hub-note-published').checked=!!n.published; $('hub-note-pinned').checked=!!n.pinned;
+    $('hub-note-title').focus();
+  }
+  async function hubSaveNote() {
+    if (authState !== 'admin') return;
+    var title=$('hub-note-title').value.trim(),body=$('hub-note-body').value.trim(),id=$('hub-note-id').value;
+    if (!title || !body) {toast('Completa el título y el mensaje.',true);return;}
+    try {
+      var val={title:title,body:body,published:$('hub-note-published').checked,pinned:$('hub-note-pinned').checked,updated_at:new Date().toISOString()};
+      var q=window.FICOESA_BACKEND.client.from('ficoesa_hub_notes');
+      var r=id ? await q.update(val).eq('id',id) : await q.insert(val);
+      if (r.error) throw r.error;
+      await hubLoadNotes();hubClearEditor();toast('Aviso guardado correctamente.');
+    } catch(e){toast(errText(e),true);}
+  }
+  async function hubDeleteNote(id) {
+    if (authState !== 'admin' || !confirm('¿Eliminar este aviso del tablón?')) return;
+    try {var r=await window.FICOESA_BACKEND.client.from('ficoesa_hub_notes').delete().eq('id',id);if(r.error)throw r.error;await hubLoadNotes();toast('Aviso eliminado.');}
+    catch(e){toast(errText(e),true);}
+  }
+  function stopTouristData() {
+    ++snapshotToken;
+    if (touristTimer) {clearInterval(touristTimer);touristTimer=null;}
+    if (unsubscribeCollection) {unsubscribeCollection();unsubscribeCollection=null;}
+  }
+  async function fetchTouristFeed(token) {
+    if (token!==snapshotToken || !isTourist()) return;
+    try {
+      var rows=await window.FICOESA_BACKEND.touristFeed();
+      var ids=[];
+      rows.forEach(function(c){var cover=c.coverId || ((c.images||[])[0]||{}).id;if(cover)ids.push(cover);});
+      rows.forEach(function(c){(c.images||[]).forEach(function(im){if(im.id)ids.push(im.id);});});
+      try {await window.FICOESA_BACKEND.refreshImageUrls(ids);}catch(err){console.warn('Imágenes de visita no disponibles; comprueba la política de Storage.',err);}
+      if (token!==snapshotToken || !isTourist()) return;
+      CAMPAIGNS=rows;dbState='ready';onData();
+    } catch(err) {if(token!==snapshotToken) return;dbState='error';console.error('Acceso turístico requiere ejecutar SQL:',err);render();}
+  }
+  function startTouristFeed(token) {
+    dbState='loading';CAMPAIGNS=[];rebuild();render();
+    fetchTouristFeed(token);
+    touristTimer=setInterval(function(){if(!document.hidden) {fetchTouristFeed(token);hubLoadNotes();}},90000);
+  }
+  async function enterTourist() {
+    if (!window.FICOESA_BACKEND || !window.FICOESA_BACKEND.configured) {toast('Falta configurar Supabase.',true);return;}
+    try {
+      // No usamos credenciales ni rol asignado en la whitelist.
+      sessionStorage.setItem('ficoesa_turista','1');
+      await window.FICOESA_BACKEND.signOut();
+      authState='turista'; ASSETS=null;MYID=null;
+      route={name:'inicio',id:null};
+      startCollection();hubLoadNotes();render();
+    } catch(e) {try{sessionStorage.removeItem('ficoesa_turista');}catch(_){} authState='guest';render();toast(errText(e),true);}
+  }
+  function exitTourist() {
+    try {sessionStorage.removeItem('ficoesa_turista');} catch(_) {}
+    stopTouristData();authState='guest'; CAMPAIGNS=[];HUB_NOTES=[];ASSETS=null;MYID=null;dbState='loading';rebuild();route={name:'inicio',id:null};render();
+  }
+
   /* ---------- Inicio ---------- */
   function renderHome() {
     var accs = [['01', 'calendario', 'cal', 'CALENDARIO', 'Explora nuestras publicaciones por fecha y consulta la actividad editorial de cada mes.', false], ['02', 'directorio', 'dir', 'DIRECTORIO', 'Descubre campañas y diseños organizados por año, marca, mes y categoría.', false], ['03', 'catalogo', 'box', 'CATÁLOGO', 'Consulta los modelos detectados en nuestras publicaciones y sus campañas asociadas.', false]];
     var h = '<section class="hero"><p class="eyebrow">FICOESA · WORKO · FORLI</p><h1 class="hero-t">FICOESA <em>CREATIVE</em> HUB</h1><p class="hero-s">Directorio digital de diseños, campañas y publicaciones.</p><p class="hero-d">Biblioteca digital de campañas, diseños y publicaciones de WORKO y FORLI.</p></section>';
+    h += renderNovelties() + renderHubBoard();
     h += '<section class="access" aria-label="Módulos">' + accs.map(function (a) {
       return '<button type="button" class="acc" data-act="nav" data-r="' + a[1] + '">' + (a[5] ? '<span class="soon-pill">Próximamente</span>' : '') + '<span class="acc-n">' + a[0] + '</span><span>' + ic(a[2], 34) + '</span><span class="acc-t">' + a[3] + '</span><span class="acc-d">' + a[4] + '</span><span class="acc-go">' + (a[5] ? 'Ver avance' : 'Entrar') + ' ' + ic('arrow', 16) + '</span></button>';
     }).join('') + '</section>';
@@ -1414,7 +1582,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     return null;
   }
   function adminTabs() {
-    var tabs = [['adm-resumen', 'Resumen general'], ['adm-nueva', 'Nueva campaña'], ['adm-gestionar', 'Gestionar campañas'], ['adm-pendientes', 'Publicaciones pendientes'], ['adm-publicadas', 'Publicaciones publicadas'], ['adm-multimedia', 'Archivo multimedia'], ['adm-usuarios', 'Usuarios autorizados']];
+    var tabs = [['adm-resumen', 'Resumen general'], ['adm-nueva', 'Nueva campaña'], ['adm-gestionar', 'Gestionar campañas'], ['adm-pendientes', 'Publicaciones pendientes'], ['adm-publicadas', 'Publicaciones publicadas'], ['adm-multimedia', 'Archivo multimedia'], ['adm-avisos', 'Tablón de avisos'], ['adm-usuarios', 'Usuarios autorizados']];
     var cur = route.name === 'adm-editar' ? 'adm-gestionar' : route.name;
     return '<nav class="admin-tabs" aria-label="Administración">' + tabs.map(function (t) { return '<button type="button" class="atab" data-act="nav" data-r="' + t[0] + '"' + (cur === t[0] ? ' aria-current="page"' : '') + '>' + t[1] + '</button>'; }).join('') + '</nav>';
   }
@@ -1667,7 +1835,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       document.body.classList.add('login-mode');
       $('sidebar').hidden = true; $('main').innerHTML = renderAccessGate(); $('pagename').textContent = 'Acceso privado'; $('search-form').hidden = true; return;
     }
-    if (route.name === 'proximamente' && !canSeeUpcoming()) route = {name:'inicio',id:null};
+    if ((route.name === 'proximamente' && !canSeeUpcoming()) || (isTourist() && isAdm(route.name))) { route = {name:'inicio',id:null}; try { history.replaceState(null,'',location.pathname+location.search+'#inicio'); } catch (_) {} }
     document.body.classList.remove('login-mode');
     $('sidebar').hidden = false; $('search-form').hidden = false;
     var html;
@@ -1685,6 +1853,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       case 'adm-publicadas': html = renderAdmList('publicada'); break;
       case 'adm-multimedia': html = renderAdmMedia(); break;
       case 'adm-usuarios': html = renderAdmUsuarios(); break;
+      case 'adm-avisos': html = renderAdmAvisos(); break;
       default: html = renderHome();
     }
     var routeToken = route.name + ':' + (route.id || '');
@@ -1699,15 +1868,15 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     if (focusId && $(focusId)) $(focusId).focus();
   }
   function buildNav() {
-    var items = [['inicio', 'home', 'Inicio'], ['calendario', 'cal', 'Calendario'], ['directorio', 'dir', 'Directorio']];
+    var items = [['inicio', 'home', isTourist() ? 'Creative Hub · Visita' : 'Inicio'], ['calendario', 'cal', 'Calendario'], ['directorio', 'dir', 'Directorio']];
     if(canSeeUpcoming()) items.push(['proximamente','cal','Próximamente']);
     items.push(['catalogo', 'box', 'Catálogo']);
     var active = route.name === 'pub' ? (from && from.name !== 'buscar' ? from.name : '') : (isAdm(route.name) ? 'adm-resumen' : route.name);
     var h = items.map(function (i) { return '<button type="button" class="nav-i" data-act="nav" data-r="' + i[0] + '"' + (active === i[0] ? ' aria-current="page"' : '') + '>' + ic(i[1], 20) + i[2] + '' + '</button>'; }).join('') + '<button type="button" class="nav-i" data-act="focus-search">' + ic('search', 20) + 'Buscador</button>';
-    if (authState === 'admin') h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="nav" data-r="adm-resumen"' + (active === 'adm-resumen' ? ' aria-current="page"' : '') + '>' + ic('admin', 20) + 'Administración</button><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + 'Cerrar sesión</button>'; else h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + 'Cerrar sesión</button>';
+    if (authState === 'admin') h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="nav" data-r="adm-resumen"' + (active === 'adm-resumen' ? ' aria-current="page"' : '') + '>' + ic('admin', 20) + 'Administración</button><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + 'Cerrar sesión</button>'; else h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + (isTourist() ? 'Salir de visita' : 'Cerrar sesión') + '</button>';
     if (canAccessConnect()) h += '<div class="nav-sep"></div><a class="nav-i" href="./connect/" style="text-decoration:none">' + ic('dir',20) + 'FICOESA Connect ↗ <span class="connect-notification-dot" data-connect-notification hidden aria-label="Mensajes nuevos"></span></a>';
     if (canAccessTools()) h += '<a class="nav-i" href="./herramientas/" style="text-decoration:none">' + ic('box',20) + 'Caja de Herramientas ↗</a>';
-    h += '<div class="nav-sep"></div><a class="nav-i" href="./intro/" style="text-decoration:none">' + ic('home',20) + 'Volver a la intro ↗</a>';
+    if (!isTourist()) h += '<div class="nav-sep"></div><a class="nav-i" href="./intro/" style="text-decoration:none">' + ic('home',20) + 'Volver a la intro ↗</a>';
     h += '<button type="button" class="nav-i" data-act="install-help">' + ic('box',20) + 'Instalar como aplicación</button>';
     $('nav').innerHTML = h;
     if (canAccessConnect() && window.FICOESA_CONNECT_NOTIFICATIONS) {
@@ -1822,6 +1991,14 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       case 'hub-export-csv': hubExport('csv'); break;
       case 'install-help': hubInstallHelp(); break;
       case 'login': openLogin(); break;
+      case 'tourist-enter': enterTourist(); break;
+      case 'novelty-prev': noveltyIndex--; render(); break;
+      case 'novelty-next': noveltyIndex++; render(); break;
+      case 'novelty-go': noveltyIndex = Number(d.i) || 0; render(); break;
+      case 'hub-note-save': hubSaveNote(); break;
+      case 'hub-note-edit': hubEditNote(d.id); break;
+      case 'hub-note-remove': hubDeleteNote(d.id); break;
+      case 'hub-note-new': hubClearEditor(); break;
       case 'users-add': addAllowedUser(); break;
       case 'users-remove': removeAllowedUser(d.email); break;
       case 'comment-new': commentPrompt(d.id, null); break;
@@ -1829,7 +2006,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       case 'comment-reply': commentPrompt(d.id, d.comment); break;
       case 'comment-toggle': toggleComment(d.id,d.comment,d.resolved === 'true'); break;
       case 'comment-delete': deleteResolvedComment(d.id,d.comment); break;
-      case 'logout': window.FICOESA_BACKEND.signOut().then(function () { authState = 'guest'; CAMPAIGNS = []; rebuild(); ASSETS = null; render(); toast('Sesión cerrada'); }, function (e) { toast(errText(e), true); }); break;
+      case 'logout': if (isTourist()) { exitTourist(); } else window.FICOESA_BACKEND.signOut().then(function () { authState = 'guest'; CAMPAIGNS = []; HUB_NOTES = []; rebuild(); ASSETS = null; render(); toast('Sesión cerrada'); }, function (e) { toast(errText(e), true); }); break;
       case 'up-reset': upcomingFilter = {cat:'all',group:'all',review:'all',from:'',to:'',plannedFrom:'',plannedTo:'',q:'',order:'added-desc'}; render(); break;
       case 'nav': if(d.r === 'proximamente' && canSeeUpcoming()) loadUpcomingCounts(); closeMenu(); query = ''; $('q').value = ''; if (d.r === 'adm-nueva') { resetForm(); route = { name: 'inicio', id: null }; } go(d.r); break;
       case 'menu-open': $('sidebar').classList.add('open'); $('scrim').classList.add('on'); break;
@@ -1978,7 +2155,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       (authState === 'denied' ? '<p class="err" style="margin-bottom:16px">Tu correo no está incluido en la lista de usuarios autorizados.</p>' : '') +
       '<form id="auth-form" class="form" style="gap:18px"><div class="field"><label for="auth-email">Correo electrónico</label><input class="in" type="email" id="auth-email" placeholder="nombre@empresa.com" autocomplete="username" required></div>' +
       '<div class="field"><label for="auth-pass">Contraseña</label><input class="in" type="password" id="auth-pass" placeholder="Introduce tu contraseña" autocomplete="current-password" required></div>' +
-      '<p class="err" id="auth-error" aria-live="polite"></p><button type="submit" class="btn primary login-submit">Entrar al directorio →</button></form></section>' +
+      '<p class="err" id="auth-error" aria-live="polite"></p><button type="submit" class="btn primary login-submit">Entrar al directorio →</button></form>' +
+      '<div class="tourist-entry"><div class="tourist-divider">O descubre nuestras publicaciones</div><button type="button" class="btn tourist-entry-btn" data-act="tourist-enter">ESTOY DE VISITA <span aria-hidden="true">→</span></button><p>Sin cuenta. Acceso exclusivo a las publicaciones ya realizadas de Creative Hub.</p></div></section>' +
       '<p class="login-footer">FICOESA · Acceso reservado a usuarios autorizados</p></div>';
   }
   async function submitLogin() {
@@ -1991,6 +2169,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       }
       authState = role;
       if (role === 'admin') { ASSETS = window.FICOESA_BACKEND.assets; var u = await window.FICOESA_BACKEND.getUser(); MYID = u.id; }
+      try { sessionStorage.removeItem('ficoesa_turista'); } catch (_) {}
+      await hubLoadNotes();
       startCollection(); render(); toast('Acceso autorizado');
     } catch (e) { box.textContent = errText(e); }
   }
@@ -2169,7 +2349,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     lastCollectionStart = Date.now();
     var collectionToken = ++snapshotToken;
     if (unsubscribeCollection) { unsubscribeCollection(); unsubscribeCollection = null; }
+    if (touristTimer) { clearInterval(touristTimer); touristTimer = null; }
     if (!canEnter()) return;
+    if (isTourist()) { startTouristFeed(collectionToken); return; }
     DB = window.FICOESA_BACKEND.db; dbState = 'loading';
     forliMasterLoad();
     unsubscribeCollection = DB.collection('campaigns').onSnapshot(async function (snap) {
@@ -2196,12 +2378,16 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     if (!backend || !backend.configured) { dbState = 'nodb'; authState = 'guest'; $('main').innerHTML = '<p class="empty">No se ha configurado Supabase. Revisa los archivos de conexión.</p>'; return; }
     try {
       authState = await backend.role();
+      if (authState === 'guest') { try { if (sessionStorage.getItem('ficoesa_turista') === '1') authState = 'turista'; } catch (_) {} }
+      else { try { sessionStorage.removeItem('ficoesa_turista'); } catch (_) {} }
       if (authState === 'admin') { ASSETS = backend.assets; var u = await backend.getUser(); MYID = u ? u.id : null; }
-      if (canEnter()) startCollection();
+      if (canEnter()) { startCollection(); hubLoadNotes(); }
     } catch (e) { console.error(e); authState = 'guest'; }
     backend.client.auth.onAuthStateChange(function (event) {
       if (event === 'SIGNED_OUT') {
-        authState = 'guest'; CAMPAIGNS = []; if (unsubscribeCollection) unsubscribeCollection(); unsubscribeCollection = null;
+        try { if (sessionStorage.getItem('ficoesa_turista') === '1') return; } catch (_) {}
+        authState = 'guest'; CAMPAIGNS = []; HUB_NOTES = []; if (unsubscribeCollection) unsubscribeCollection(); unsubscribeCollection = null;
+        if (touristTimer) { clearInterval(touristTimer); touristTimer = null; }
         ASSETS = null; MYID = null; rebuild(); render();
       }
     });

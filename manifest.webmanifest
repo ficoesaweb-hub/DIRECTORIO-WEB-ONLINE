@@ -3,7 +3,7 @@
   "short_name": "Creative Hub",
   "description": "Repositorio interno de campañas y recursos de WORKO y FORLI",
   "id": "./intro/",
-  "start_url": "./intro/",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#252525",
