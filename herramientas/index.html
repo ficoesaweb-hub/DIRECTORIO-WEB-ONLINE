@@ -48,7 +48,14 @@ footer{border-top:1px solid #39433c;margin-top:58px;padding-top:26px}
 /* V3.3 - navegación equilibrada e iconografía FICOESA */
 .category-sort-grid{display:grid;grid-template-columns:repeat(3,minmax(0,318px));justify-content:center;gap:18px;margin-left:auto;margin-right:auto;max-width:1010px}
 @media(min-width:1081px){.category-sort-card:last-child:nth-child(3n + 1){grid-column:2}}
-.category-sort-card{width:100%;min-width:0}.category-feature{min-height:228px}.cat-symbol{width:56px;height:56px;border-radius:15px;background:linear-gradient(145deg,#ffdd59,#e8b929);box-shadow:0 7px 28px #0003;color:#202623}.cat-svg{display:block;max-width:100%;height:auto}
+.category-sort-card{width:100%;min-width:0}.category-feature{min-height:228px}.cat-symbol{width:56px;height:56px;border-radius:15px;background:linear-gradient(145deg,#ffdd59,#e8b929);box-shadow:0 7px 28px #0003;color:#131b17}.cat-svg{display:block;max-width:100%;height:auto}
+/* V3.3.1: Los iconos de las siete categorías deben contrastar sobre el amarillo.
+   La regla antigua .tile span coloreaba sus SVG de amarillo por su mayor especificidad. */
+.category-feature .cat-symbol,
+.category-feature .cat-symbol .cat-svg{color:#131b17!important}
+.category-feature .cat-symbol .cat-svg{stroke:#131b17;stroke-width:2.15}
+.category-feature:hover .cat-symbol .cat-svg,
+.category-feature:focus-visible .cat-symbol .cat-svg{stroke:#101714}
 .category-feature .cat-main,.category-feature .cat-foot{align-items:center;text-align:center;justify-content:center}.category-feature .cat-main strong{font-weight:800}.category-feature .cat-foot{justify-content:space-between}.category-feature .cat-foot>span:first-child{flex:1;text-align:center}
 .category-feature .cat-top{justify-content:center;position:relative}.cat-index{position:absolute;right:0;top:0}.category-feature{align-items:center}.category-sort-tools{top:10px;right:9px}.category-feature .cat-main small{max-width:250px}
 .folder-centered{display:flex;justify-content:center;flex-wrap:wrap;gap:16px;max-width:1120px;margin:0 auto}.folder-centered>.folder-tile{flex:0 1 248px}.folder-icon .cat-svg{color:var(--yellow)}
