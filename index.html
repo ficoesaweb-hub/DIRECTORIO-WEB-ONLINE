@@ -848,7 +848,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     coverCache[key] = uri;
     return uri;
   }
-  function imgUrl(p, idx) { if (p.images.length) return window.FICOESA_BACKEND.publicImage((p.images[idx] || p.images[0]).id); return demoCover(p, idx); }
+  var pendingImagePlaceholder='data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000"><rect width="800" height="1000" fill="#252b29"/><path d="M0 710L800 240" stroke="#3b453e" stroke-width="2"/><rect x="270" y="342" width="260" height="190" rx="18" fill="none" stroke="#717c73" stroke-width="8"/><circle cx="350" cy="402" r="25" fill="#f6c118"/><path d="M290 500l100-95 55 53 60-70" fill="none" stroke="#f6c118" stroke-width="8"/><text x="400" y="610" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#c7cdc7">IMAGEN EN CARGA</text></svg>');
+  function imgUrl(p, idx) { if (p.images.length) return window.FICOESA_BACKEND.publicImage((p.images[idx] || p.images[0]).id)||pendingImagePlaceholder; return demoCover(p, idx); }
   function cover(p) { return imgUrl(p, p.coverIdx); }
 
   /* ---------- Iconos y marcas (forma + texto) ---------- */
@@ -947,7 +948,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     return h + '</div></div>';
   }
   function stateGate() {
-    if (dbState === 'loading') return '<p class="empty"><b>Cargando el directorio…</b>Un momento, estamos consultando las campañas guardadas.</p>';
+    if (dbState === 'loading') return null;
     if (dbState === 'nodb') return '<p class="empty"><b>No se puede acceder al directorio desde esta vista.</b>Configura la URL y la clave pública de Supabase en supabase-config.js para activar las campañas.</p>';
     if (dbState === 'error') return '<div class="empty"><b>No se han podido cargar las campañas.</b><span>'+ (isTourist() ? 'El acceso público necesita la función segura de Supabase. Comprueba que se haya ejecutado el SQL de instalación. ' + (touristLoadError ? 'Detalle: '+esc(touristLoadError) : '') : 'Recarga la página. Si el problema continúa, avisa al administrador.') +'</span>'+(isTourist()?'<button class="btn sm primary" type="button" data-act="tourist-retry">Reintentar carga</button>':'')+'</div>';
     return null;
@@ -980,7 +981,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   function renderNovelties() {
     var items=recentNovelties(), total=items.length;
     var h='<section class="sec hub-news" aria-label="Novedades de Creative Hub"><div class="sec-h"><div><p class="eyebrow">ACTUALIDAD · WORKO / FORLI</p><h2>Últimas novedades</h2></div><span class="note">Las 3 publicaciones más recientes</span></div>';
-    if(dbState==='loading') return h+'<p class="empty">Cargando novedades…</p></section>';
+    if(dbState==='loading') return h+'<p class="note">Las novedades aparecerán cuando estén disponibles. Puedes seguir navegando.</p></section>';
     if(dbState==='error') return h+'<p class="empty">Las novedades estarán disponibles cuando se restablezca la lectura de campañas.</p></section>';
     if(!total) return h+'<p class="empty">Las últimas publicaciones aparecerán aquí.</p></section>';
     noveltyIndex=((noveltyIndex%total)+total)%total;
@@ -1127,9 +1128,12 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       var ids=[];
       rows.forEach(function(c){var cover=c.coverId || ((c.images||[])[0]||{}).id;if(cover)ids.push(cover);});
       rows.forEach(function(c){(c.images||[]).forEach(function(im){if(im.id)ids.push(im.id);});});
-      try {await window.FICOESA_BACKEND.refreshImageUrls(ids);}catch(err){console.warn('Imágenes de visita no disponibles; comprueba la política de Storage.',err);}
       if (token!==snapshotToken || !isTourist()) return;
       CAMPAIGNS=rows;touristLoadError='';dbState='ready';onData();
+      // Las imágenes se solicitan en segundo plano: nunca bloquean el directorio.
+      window.FICOESA_BACKEND.refreshImageUrls(ids).then(function(){
+        if(token===snapshotToken && isTourist() && dbState==='ready') onData();
+      }).catch(function(err){console.warn('Imágenes opcionales no disponibles; la navegación permanece activa.',err);});
     } catch(err) {if(token!==snapshotToken) return;dbState='error';touristLoadError=errText(err);console.error('Error al cargar feed turístico; revisa SQL y permisos:',err);render();}
   }
   function startTouristFeed(token) {
@@ -1163,7 +1167,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     }).join('') + '</section>';
     var gate = stateGate();
     if (gate) return h + '<section class="sec">' + gate + '</section>';
-    if (!PUBS.length) return h + '<section class="sec">' + emptyRepo() + '</section>';
+    if (!PUBS.length) return h + (dbState === 'loading' ? '<section class="sec"><p class="note">Sincronizando publicaciones en segundo plano. El menú ya está disponible.</p></section>' : '<section class="sec">' + emptyRepo() + '</section>');
 
     h += '<section class="sec"><div class="sec-h"><h2>Últimas publicaciones añadidas</h2><button type="button" class="link" data-act="nav" data-r="directorio">Ver directorio ' + ic('arrow', 14) + '</button></div>' + pubGrid(sortPubs(PUBS, 'alta').slice(0, 6), true) + '</section>';
     var inMonth = uniq(POSTS.filter(function (x) { var d = pd(x.date); return d.y === TY && d.m === TM; }).map(function (x) { return x.pubId; })).map(function (id) { return PUB_BY[id]; });
@@ -2459,11 +2463,12 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
           if (coverId) imageIds.push(coverId);
         });
         campaigns.forEach(function (c) { (c.images || []).forEach(function (im) { if (im.id) imageIds.push(im.id); }); });
-        // Un fallo temporal de Storage no debe ocultar las campanas de la base de datos.
-        try { await window.FICOESA_BACKEND.refreshImageUrls(imageIds); }
-        catch (imageError) { console.warn('Storage temporalmente saturado: las campanas siguen disponibles.', imageError); }
+        // Primero los datos y la navegación, sin esperar a las portadas.
         if (collectionToken !== snapshotToken) return;
         CAMPAIGNS = campaigns; dbState = 'ready'; onData();
+        window.FICOESA_BACKEND.refreshImageUrls(imageIds).then(function(){
+          if(collectionToken===snapshotToken && dbState==='ready') onData();
+        }).catch(function(imageError){console.warn('Storage no disponible; las campañas siguen accesibles sin miniaturas.',imageError);});
       } catch (e) { console.error(e); dbState = 'error'; render(); }
     }, function (e) { console.error(e); dbState = 'error'; render(); });
   }
