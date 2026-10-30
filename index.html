@@ -82,6 +82,66 @@
 .hub-note-admin h3{font-size:.96rem;margin:8px 0}.hub-note-admin p{white-space:pre-wrap;color:var(--muted);font-size:.83rem}
 .hub-admin-actions{display:flex;gap:6px;flex-wrap:wrap}
 @media(max-width:740px){.hub-board-items{grid-template-columns:1fr}.hub-board-head{align-items:start;flex-direction:column}.hub-note-admin{flex-direction:column}}
+
+/* V3.4 - Portadas editoriales 4:5. Carrusel centrado WORKO / FORLI */
+/* Inicio sin cabecera gigante: las novedades ganan protagonismo desde el primer vistazo */
+#main:has(.hub-news)>.hero{gap:8px;padding-block:10px 8px;margin:0}
+#main:has(.hub-news)>.hero .hero-t{font-size:clamp(2rem,4.5vw,4.2rem);line-height:1.02;letter-spacing:-.035em}
+#main:has(.hub-news)>.hero .hero-s{font-size:clamp(.9rem,1.5vw,1.1rem)}
+#main:has(.hub-news)>.hero .hero-d{display:none}
+#main:has(.hub-news) .hub-news{margin-top:20px}
+@media(max-width:740px){#main:has(.hub-news)>.hero{padding-block:8px 4px;gap:7px}#main:has(.hub-news)>.hero .hero-t{font-size:clamp(1.95rem,8vw,2.6rem)}}
+
+.hub-news{max-width:1060px;margin:26px auto 38px}
+.hub-news .sec-h{max-width:940px;margin:0 auto 16px}
+.hub-carousel-wrap{gap:10px;max-width:1030px;margin:0 auto}
+.hub-carousel{max-width:940px;margin:0 auto;overflow:hidden;border-radius:18px;border:1px solid rgba(246,193,24,.25);box-shadow:0 24px 70px rgba(0,0,0,.24);background:linear-gradient(130deg,#252929,#1e2322)}
+.hub-news-card{display:grid;grid-template-columns:minmax(270px,0.9fr) minmax(270px,1fr);align-items:stretch;min-height:0;background:linear-gradient(110deg,#252a28,#292e2c);border:0;overflow:hidden}
+.hub-news-cover{width:100%;min-width:0;height:clamp(350px, min(66dvh,55vw),555px);display:flex;align-items:center;justify-content:center;flex:none;padding:15px;background:radial-gradient(circle at 48% 40%,#414645,#202423 78%)}
+.hub-news-cover img{width:100%;height:100%;object-fit:contain;object-position:center;filter:drop-shadow(0 6px 20px rgba(0,0,0,.28))}
+.hub-news-number{top:22px;left:22px;border-radius:6px}
+.hub-news-info{align-items:flex-start;text-align:left;justify-content:center;padding:clamp(25px,4vw,56px);min-width:0}
+.hub-news-info h3{font-size:clamp(1.35rem,2.5vw,2.4rem);line-height:1.18;margin:14px 0 16px}
+.hub-news-info .hub-news-cta{margin-top:24px;background:#fdc506;color:#1c201e;padding:12px 18px;border-radius:8px;font-size:.77rem;letter-spacing:.06em}
+.hub-news-info .hub-news-ref{line-height:1.75}
+.hub-carousel-arrow{background:rgba(38,42,40,.96);border:1px solid #525b55;color:#f6c118;width:44px;flex:0 0 44px;height:58px;border-radius:12px;font-size:30px}
+.hub-news-controls{max-width:930px;margin:14px auto 0;padding:0;justify-content:space-between}
+@media(min-width:741px) and (max-width:1050px){.hub-news-cover{height:clamp(310px,53vw,510px)}.hub-news-info{padding:22px}.hub-news-card{grid-template-columns:minmax(220px,.92fr) minmax(210px,1fr)}}
+@media(max-width:740px){
+  .hub-news{margin:24px auto 30px}
+  .hub-news .sec-h{align-items:flex-start;gap:10px}
+  .hub-carousel-wrap{gap:5px}
+  .hub-carousel-arrow{flex-basis:29px;width:29px;height:49px;border-radius:7px;font-size:23px}
+  .hub-carousel{border-radius:12px}
+  .hub-news-card{display:flex;flex-direction:column;min-height:0}
+  .hub-news-cover{width:100%;height:min(52dvh,460px);min-height:245px;flex:none;padding:10px}
+  .hub-news-info{padding:14px 19px 20px;align-items:center;text-align:center}
+  .hub-news-info h3{font-size:clamp(1.06rem,4.8vw,1.45rem);margin:8px 0 6px}
+  .hub-news-info .hub-news-cta{margin-top:12px;padding:9px 16px}
+  .hub-news-controls{justify-content:center;flex-wrap:wrap}
+}
+/* V3.4 - Sidebar retráctil: iconos + tooltips al plegar */
+@media(min-width:961px){
+  body.sidebar-collapsed .app{grid-template-columns:72px minmax(0,1fr)}
+  .side-brand{display:flex;align-items:flex-start;justify-content:space-between;gap:4px}
+  .side-toggle{flex:none;color:#fdc506;font-size:23px;border:1px solid var(--line);background:var(--surface-2);border-radius:7px;width:30px;height:32px;cursor:pointer;display:grid;place-items:center}
+  .side-toggle:hover,.side-toggle:focus-visible{background:#fdc506;color:#202323}
+  .sidebar{transition:width .25s ease,padding .25s ease}
+  body.sidebar-collapsed .sidebar{padding:20px 9px;gap:22px;overflow-x:hidden}
+  body.sidebar-collapsed .side-brand{flex-direction:column;align-items:center}
+  body.sidebar-collapsed .wordmark{display:none}
+  body.sidebar-collapsed .side-brand:before{content:'F';font-weight:800;font-size:27px;color:#fdc506;line-height:1.2}
+  body.sidebar-collapsed .side-toggle{transform:rotate(0deg)}
+  body.sidebar-collapsed .nav-i{font-size:0;gap:0;justify-content:center;padding:13px 5px;border-left-width:2px;min-height:43px}
+  body.sidebar-collapsed .nav-i:hover{padding-left:5px}
+  body.sidebar-collapsed .nav-i .nav-label{display:none}
+  body.sidebar-collapsed .nav-i .connect-notification-dot{position:absolute;right:4px;top:4px;margin:0}
+  body.sidebar-collapsed .nav-i svg{flex:none;width:21px;height:21px}
+  body.sidebar-collapsed .side-foot{display:none}
+  body.sidebar-collapsed .nav{gap:7px}
+}
+@media(max-width:960px){.side-toggle{display:none}}
+@media(prefers-reduced-motion:reduce){.sidebar{transition:none!important}}
 </style>
 <style id="connect-notifications-style">
 .connect-notification-dot {display:inline-block; flex:none; width:10px; height:10px; border-radius:50%; background:#ff6472; margin-left:auto; box-shadow:0 0 0 3px rgba(255,100,114,.13);}
@@ -692,7 +752,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
 
 <div class="app">
   <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
-    <div class="wordmark"><b>FICOESA</b><span>CREATIVE HUB</span></div>
+    <div class="side-brand"><div class="wordmark"><b>FICOESA</b><span>CREATIVE HUB</span></div><button type="button" class="side-toggle" data-act="sidebar-toggle" aria-label="Plegar menú lateral" aria-expanded="true" title="Plegar menú lateral">‹</button></div>
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">Uso interno · WORKO y FORLI</div>
   </aside>
@@ -1966,13 +2026,19 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     if(canSeeUpcoming()) items.push(['proximamente','cal','Próximamente']);
     items.push(['catalogo', 'box', 'Catálogo']);
     var active = route.name === 'pub' ? (from && from.name !== 'buscar' ? from.name : '') : (isAdm(route.name) ? 'adm-resumen' : route.name);
-    var h = items.map(function (i) { return '<button type="button" class="nav-i" data-act="nav" data-r="' + i[0] + '"' + (active === i[0] ? ' aria-current="page"' : '') + '>' + ic(i[1], 20) + i[2] + '' + '</button>'; }).join('') + '<button type="button" class="nav-i" data-act="focus-search">' + ic('search', 20) + 'Buscador</button>';
+    var h = items.map(function (i) { return '<button type="button" class="nav-i" data-act="nav" data-r="' + i[0] + '"' + (active === i[0] ? ' aria-current="page"' : '') + '>' + ic(i[1], 20) + '<span class="nav-label">'+esc(i[2])+'</span>' + '</button>'; }).join('') + '<button type="button" class="nav-i" data-act="focus-search">' + ic('search', 20) + 'Buscador</button>';
     if (authState === 'admin') h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="nav" data-r="adm-resumen"' + (active === 'adm-resumen' ? ' aria-current="page"' : '') + '>' + ic('admin', 20) + 'Administración</button><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + 'Cerrar sesión</button>'; else h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + (isTourist() ? 'Salir de visita' : 'Cerrar sesión') + '</button>';
     if (canAccessConnect()) h += '<div class="nav-sep"></div><a class="nav-i" href="./connect/" style="text-decoration:none">' + ic('dir',20) + 'FICOESA Connect ↗ <span class="connect-notification-dot" data-connect-notification hidden aria-label="Mensajes nuevos"></span></a>';
     if (canAccessTools()) h += '<a class="nav-i" href="./herramientas/" style="text-decoration:none">' + ic('box',20) + 'Caja de Herramientas ↗</a>';
     if (!isTourist()) h += '<div class="nav-sep"></div><a class="nav-i" href="./intro/" style="text-decoration:none">' + ic('home',20) + 'Volver a la intro ↗</a>';
     h += '<button type="button" class="nav-i" data-act="install-help">' + ic('box',20) + 'Instalar como aplicación</button>';
     $('nav').innerHTML = h;
+    Array.prototype.forEach.call($('nav').querySelectorAll('.nav-i'),function(el){
+      var label=el.textContent.trim();el.title=label;el.setAttribute('aria-label',label);
+      // Wrapper for legacy inline labels; keeps icon visible when the sidebar closes.
+      Array.prototype.forEach.call(el.childNodes,function(n){if(n.nodeType===3&&n.textContent.trim()){var sp=document.createElement('span');sp.className='nav-label';sp.textContent=n.textContent;el.replaceChild(sp,n);}});
+    });
+    refreshSidebarToggle();
     if (canAccessConnect() && window.FICOESA_CONNECT_NOTIFICATIONS) {
       window.FICOESA_CONNECT_NOTIFICATIONS.start(async function () {
         var u = await window.FICOESA_BACKEND.getUser(); return u && u.email;
@@ -2036,6 +2102,16 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     var fallback = function () { var b = $('link-box'); b.innerHTML = '<input class="copy-fallback" id="link-input" readonly aria-label="Enlace interno" value="' + esc(url) + '">'; var i = $('link-input'); i.focus(); i.select(); toast('Selecciona y copia el enlace'); };
     try { navigator.clipboard.writeText(url).then(function () { toast('Enlace copiado'); }, fallback); } catch (e) { fallback(); }
   }
+  // V3.4 - Menú plegable en escritorio, con preferencia de la sesión local.
+  var sidebarIsCollapsed=false;
+  try { sidebarIsCollapsed=localStorage.getItem('ficoesa-hub-sidebar')!=='expanded'; } catch (_) { sidebarIsCollapsed=true; }
+  function refreshSidebarToggle(){
+    document.body.classList.toggle('sidebar-collapsed',sidebarIsCollapsed);
+    var b=document.querySelector('.side-toggle');if(!b)return;
+    b.textContent=sidebarIsCollapsed?'›':'‹';b.setAttribute('aria-expanded',String(!sidebarIsCollapsed));
+    b.setAttribute('aria-label',sidebarIsCollapsed?'Desplegar menú lateral':'Plegar menú lateral');b.title=sidebarIsCollapsed?'Desplegar menú lateral':'Plegar menú lateral';
+  }
+  function toggleSidebar(){sidebarIsCollapsed=!sidebarIsCollapsed;try{localStorage.setItem('ficoesa-hub-sidebar',sidebarIsCollapsed?'collapsed':'expanded');}catch(_){}refreshSidebarToggle();}
   function closeMenu() { $('sidebar').classList.remove('open'); $('scrim').classList.remove('on'); }
 
   /* ---------- Creative Hub: exportacion administradores ---------- */
@@ -2107,6 +2183,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       case 'logout': if (isTourist()) { exitTourist(); } else window.FICOESA_BACKEND.signOut().then(function () { authState = 'guest'; CAMPAIGNS = []; HUB_NOTES = []; rebuild(); ASSETS = null; render(); toast('Sesión cerrada'); }, function (e) { toast(errText(e), true); }); break;
       case 'up-reset': upcomingFilter = {cat:'all',group:'all',review:'all',from:'',to:'',plannedFrom:'',plannedTo:'',q:'',order:'added-desc'}; render(); break;
       case 'nav': if(d.r === 'proximamente' && canSeeUpcoming()) loadUpcomingCounts(); closeMenu(); query = ''; $('q').value = ''; if (d.r === 'adm-nueva') { resetForm(); route = { name: 'inicio', id: null }; } go(d.r); break;
+      case 'sidebar-toggle': toggleSidebar(); break;
       case 'menu-open': $('sidebar').classList.add('open'); $('scrim').classList.add('on'); break;
       case 'menu-close': closeMenu(); break;
       case 'focus-search': closeMenu(); $('q').focus(); break;
