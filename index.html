@@ -748,11 +748,30 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
  *,*::before,*::after { animation:none!important;transition:none!important;scroll-behavior:auto!important; }
 }
 
+
+/* V3.5 · Menú desktop acoplado, plegado por defecto y hover/foco expandido. */
+@media(min-width:961px){
+  body.sidebar-collapsed .app{grid-template-columns:72px minmax(0,1fr)}
+  body.sidebar-collapsed .sidebar{width:72px;min-width:0;transition:width .32s cubic-bezier(.22,1,.36,1),padding .32s cubic-bezier(.22,1,.36,1),box-shadow .32s ease;box-shadow:2px 0 18px transparent}
+  body.sidebar-collapsed .sidebar:is(:hover,:focus-within){width:var(--sidebar-w);padding:28px 20px 24px;gap:28px;overflow-x:hidden;box-shadow:16px 0 45px rgba(0,0,0,.37);border-right-color:rgba(246,193,24,.28)}
+  body.sidebar-collapsed .sidebar:is(:hover,:focus-within) .side-brand{flex-direction:row;align-items:flex-start;justify-content:space-between}
+  body.sidebar-collapsed .sidebar:is(:hover,:focus-within) .side-brand::before{display:none}
+  body.sidebar-collapsed .sidebar:is(:hover,:focus-within) .wordmark{display:grid}
+  body.sidebar-collapsed .sidebar:is(:hover,:focus-within) .nav{gap:4px}
+  body.sidebar-collapsed .sidebar:is(:hover,:focus-within) .nav-i{font-size:.9rem;justify-content:flex-start;gap:12px;padding:11px 12px 11px 14px;min-height:43px;border-left-width:3px}
+  body.sidebar-collapsed .sidebar:is(:hover,:focus-within) .nav-i:hover{padding-left:14px}
+  body.sidebar-collapsed .sidebar:is(:hover,:focus-within) .nav-i .nav-label{display:inline}
+  body.sidebar-collapsed .sidebar:is(:hover,:focus-within) .nav-i .connect-notification-dot{position:static;margin-left:auto}
+  body.sidebar-collapsed .sidebar:is(:hover,:focus-within) .side-foot{display:block}
+  body.sidebar-collapsed .nav-i{transition:background-color .18s,color .18s,border-color .18s}
+  body.sidebar-collapsed .sidebar:focus-within .nav-i:focus-visible{outline:2px solid #fdc506;outline-offset:-2px}
+}
+@media(prefers-reduced-motion:reduce){body.sidebar-collapsed .sidebar{transition:none!important}}
 </style>
 
 <div class="app">
   <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
-    <div class="side-brand"><div class="wordmark"><b>FICOESA</b><span>CREATIVE HUB</span></div><button type="button" class="side-toggle" data-act="sidebar-toggle" aria-label="Plegar menú lateral" aria-expanded="true" title="Plegar menú lateral">‹</button></div>
+    <div class="side-brand"><div class="wordmark"><b>FICOESA</b><span>CREATIVE HUB</span></div></div>
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">Uso interno · WORKO y FORLI</div>
   </aside>
@@ -2102,16 +2121,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     var fallback = function () { var b = $('link-box'); b.innerHTML = '<input class="copy-fallback" id="link-input" readonly aria-label="Enlace interno" value="' + esc(url) + '">'; var i = $('link-input'); i.focus(); i.select(); toast('Selecciona y copia el enlace'); };
     try { navigator.clipboard.writeText(url).then(function () { toast('Enlace copiado'); }, fallback); } catch (e) { fallback(); }
   }
-  // V3.4 - Menú plegable en escritorio, con preferencia de la sesión local.
-  var sidebarIsCollapsed=false;
-  try { sidebarIsCollapsed=localStorage.getItem('ficoesa-hub-sidebar')!=='expanded'; } catch (_) { sidebarIsCollapsed=true; }
-  function refreshSidebarToggle(){
-    document.body.classList.toggle('sidebar-collapsed',sidebarIsCollapsed);
-    var b=document.querySelector('.side-toggle');if(!b)return;
-    b.textContent=sidebarIsCollapsed?'›':'‹';b.setAttribute('aria-expanded',String(!sidebarIsCollapsed));
-    b.setAttribute('aria-label',sidebarIsCollapsed?'Desplegar menú lateral':'Plegar menú lateral');b.title=sidebarIsCollapsed?'Desplegar menú lateral':'Plegar menú lateral';
-  }
-  function toggleSidebar(){sidebarIsCollapsed=!sidebarIsCollapsed;try{localStorage.setItem('ficoesa-hub-sidebar',sidebarIsCollapsed?'collapsed':'expanded');}catch(_){}refreshSidebarToggle();}
+  // V3.5 - Menú de escritorio siempre recogido. Apertura CSS por hover o foco.
+  function refreshSidebarToggle(){document.body.classList.add('sidebar-collapsed');}
   function closeMenu() { $('sidebar').classList.remove('open'); $('scrim').classList.remove('on'); }
 
   /* ---------- Creative Hub: exportacion administradores ---------- */
@@ -2183,7 +2194,6 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       case 'logout': if (isTourist()) { exitTourist(); } else window.FICOESA_BACKEND.signOut().then(function () { authState = 'guest'; CAMPAIGNS = []; HUB_NOTES = []; rebuild(); ASSETS = null; render(); toast('Sesión cerrada'); }, function (e) { toast(errText(e), true); }); break;
       case 'up-reset': upcomingFilter = {cat:'all',group:'all',review:'all',from:'',to:'',plannedFrom:'',plannedTo:'',q:'',order:'added-desc'}; render(); break;
       case 'nav': if(d.r === 'proximamente' && canSeeUpcoming()) loadUpcomingCounts(); closeMenu(); query = ''; $('q').value = ''; if (d.r === 'adm-nueva') { resetForm(); route = { name: 'inicio', id: null }; } go(d.r); break;
-      case 'sidebar-toggle': toggleSidebar(); break;
       case 'menu-open': $('sidebar').classList.add('open'); $('scrim').classList.add('on'); break;
       case 'menu-close': closeMenu(); break;
       case 'focus-search': closeMenu(); $('q').focus(); break;
