@@ -870,7 +870,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   function isTourist() { return authState === 'turista'; }
   function canEnter() { return validRole(authState) || isTourist(); }
   function canSeeUpcoming() { return ['admin','comenter','worker','boss'].indexOf(authState) !== -1; }
-  function canComment() { return authState === 'admin' || authState === 'comenter'; }
+  function canComment() { return ['admin','comenter','boss'].indexOf(authState) !== -1; }
   function canAccessTools() { return ['admin','worker','boss'].indexOf(authState) !== -1; }
   function canAccessConnect() { return ['admin','comenter','worker','boss'].indexOf(authState) !== -1; }
   function rebuild() {
@@ -958,18 +958,20 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   var cal = { y: TY, m: TM, f: { cat: 'all', camp: 'all', net: 'all', status: 'all', type: 'all' } };
   var dir = { year: null, cat: null, month: null, camp: null, view: 'grid', sort: 'fecha-desc', hideEmpty: false };
   var adm = { q: '', cat: 'all', status: 'all' };
+  var bossFilters = { q: '', cat: 'all', status: 'all' };
   var upcomingFilter = {cat:'all',group:'all',review:'all',from:'',to:'',plannedFrom:'',plannedTo:'',q:'',order:'added-desc'};
   var upcomingCounts = Object.create(null), upcomingLoading = false, upcomingError = '', upcomingRequest = 0;
   var gal = { id: null, idx: 0 }, lb = null, opener = null, pendingConfirm = null, F = null;
 
   /* ---------- Rutas ---------- */
   var ADM = ['resumen', 'nueva', 'gestionar', 'pendientes', 'publicadas', 'multimedia', 'avisos', 'usuarios'];
-  var PAGES = { inicio: 'Inicio', calendario: 'Calendario', directorio: 'Directorio', proximamente: 'Próximamente', catalogo: 'Catálogo de productos', buscar: 'Búsqueda', pub: 'Ficha de publicación', 'adm-resumen': 'Administración', 'adm-nueva': 'Administración · Nueva campaña', 'adm-gestionar': 'Administración · Gestionar', 'adm-pendientes': 'Administración · Pendientes', 'adm-publicadas': 'Administración · Publicadas', 'adm-multimedia': 'Administración · Multimedia', 'adm-editar': 'Administración · Editar campaña', 'adm-usuarios': 'Administración · Usuarios autorizados', 'adm-avisos': 'Administración · Avisos' };
+  var PAGES = { inicio: 'Inicio', calendario: 'Calendario', directorio: 'Directorio', proximamente: 'Próximamente', boss: 'Vista global BOSS', catalogo: 'Catálogo de productos', buscar: 'Búsqueda', pub: 'Ficha de publicación', 'adm-resumen': 'Administración', 'adm-nueva': 'Administración · Nueva campaña', 'adm-gestionar': 'Administración · Gestionar', 'adm-pendientes': 'Administración · Pendientes', 'adm-publicadas': 'Administración · Publicadas', 'adm-multimedia': 'Administración · Multimedia', 'adm-editar': 'Administración · Editar campaña', 'adm-usuarios': 'Administración · Usuarios autorizados', 'adm-avisos': 'Administración · Avisos' };
   function isAdm(n) { return n.indexOf('adm-') === 0; }
   function parseHash() {
     var h = (location.hash || '').replace(/^#/, '');
     if (h.indexOf('pub-') === 0) return { name: 'pub', id: h.slice(4) };
     if (h.indexOf('admin-editar-') === 0) return { name: 'adm-editar', id: h.slice(13) };
+    if (h === 'boss') return { name: 'boss', id: null };
     if (h === 'admin') return { name: 'adm-resumen', id: null };
     if (h.indexOf('admin-') === 0 && ADM.indexOf(h.slice(6)) > -1) return { name: 'adm-' + h.slice(6), id: null };
     if (['inicio', 'calendario', 'directorio', 'catalogo', 'proximamente'].indexOf(h) > -1) return { name: h, id: null };
@@ -977,6 +979,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   }
   function hashFor(name, id) { if (name === 'pub') return 'pub-' + id; if (name === 'adm-editar') return 'admin-editar-' + id; if (isAdm(name)) return 'admin-' + name.slice(4); return name; }
   function go(name, id) {
+    if (name === 'boss' && authState !== 'boss') name = 'inicio';
     if (route.name !== name && (route.name === 'adm-nueva' || route.name === 'adm-editar') && !(name === 'adm-editar' || name === 'adm-nueva')) resetForm();
     if (name === 'proximamente' && !canSeeUpcoming()) name = 'inicio';
     if (isTourist() && (isAdm(name) || name === 'proximamente')) name = 'inicio';
@@ -987,7 +990,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   }
   window.addEventListener('hashchange', function () {
     var r = parseHash();
-    if ((r.name === 'proximamente' && !canSeeUpcoming()) || (isTourist() && isAdm(r.name))) { r = {name:'inicio',id:null}; try { history.replaceState(null,'',location.pathname+location.search+'#inicio'); } catch (_) {} }
+    if ((r.name === 'proximamente' && !canSeeUpcoming()) || (r.name === 'boss' && authState !== 'boss') || (isTourist() && isAdm(r.name))) { r = {name:'inicio',id:null}; try { history.replaceState(null,'',location.pathname+location.search+'#inicio'); } catch (_) {} }
     if (route.name === 'buscar' && !location.hash) return;
     if (r.name !== route.name || r.id !== route.id) { route = r; render(); window.scrollTo(0, 0); }
   });
@@ -1154,11 +1157,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     if (!canEnter() || !window.FICOESA_BACKEND || !window.FICOESA_BACKEND.client) return;
     try {
       var q = window.FICOESA_BACKEND.client.from('ficoesa_hub_notes').select('id,title,body,pinned,published,created_at,updated_at').order('created_at', {ascending:false}).limit(100);
-      if (authState !== 'admin') q=q.eq('published',true);
+      if (authState !== 'admin' && authState !== 'boss') q=q.eq('published',true);
       var r=await q;
       if (r.error) throw r.error;
       HUB_NOTES = r.data || []; hubNotesError = '';
-      if (route.name==='inicio' || route.name==='adm-avisos') render();
+      if (route.name==='inicio' || route.name==='adm-avisos' || route.name==='boss') render();
     } catch(e) {hubNotesError=errText(e); console.warn('El tablón requiere la migración SQL: ',e); if (route.name==='adm-avisos') render();}
   }
   function renderAdmAvisos() {
@@ -1473,6 +1476,45 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     return h;
   }
 
+  /* ---------- BOSS: consulta integral de campañas, sin permisos de administración. ---------- */
+  function bossTable() {
+    var toks = norm(bossFilters.q).split(/\s+/).filter(Boolean);
+    var rows = ALL.filter(function(p) {
+      if (bossFilters.cat !== 'all' && p.cat !== bossFilters.cat) return false;
+      if (bossFilters.status === 'archivada' && !p.archived) return false;
+      if (bossFilters.status === 'pendiente' && (p.archived || p.campStatus !== 'pendiente')) return false;
+      if (bossFilters.status === 'publicada' && (p.archived || p.campStatus !== 'publicada')) return false;
+      var text = norm([p.title,p.ref,p.group,CATS[p.cat].name,STATUS[p.status],p.refDate,fmtNum(p.refDate),p.refDate ? MONTHS[p.month] : '',p.year || ''].join(' '));
+      return toks.every(function(t) { return text.indexOf(t) > -1; });
+    });
+    if (!rows.length) return '<p class="empty">No hay campañas que coincidan con estos filtros.</p>';
+    return '<div class="tbl-wrap"><table class="tbl" style="min-width:820px"><thead><tr><th></th><th>Título</th><th>Marca</th><th>Fecha</th><th>Estado</th><th>Imág.</th><th>Consulta</th></tr></thead><tbody>' +
+      sortPubs(rows, 'fecha-desc').map(function(p) {
+        return '<tr class="' + (p.archived ? 'row-arch' : '') + '"><td><img src="' + cover(p) + '" alt="" loading="lazy"></td><td class="t">' + esc(p.title) + '<small>' + esc(p.ref) + ' · ' + esc(gl(gk(p))) + '</small></td><td>' + catTag(p.cat) + '</td><td>' + dateOfPub(p) + '</td><td>' + statusLabel(p.status) + '</td><td>' + p.nImg + '</td><td><button type="button" class="btn sm" data-act="open-pub" data-id="' + esc(p.id) + '">Ver ficha</button></td></tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+  function renderBossOverview() {
+    if (authState !== 'boss') return '<div class="empty">Acceso restringido.</div>';
+    var gate = stateGate();
+    if (gate) return gate;
+    var active = ALL.filter(function(p) { return !p.archived; });
+    var pending = active.filter(function(p) { return p.campStatus === 'pendiente'; });
+    var published = active.filter(function(p) { return p.campStatus === 'publicada'; });
+    var h = '<div class="page-h"><p class="eyebrow">Perfil BOSS · Consulta global</p><h1>Vista global de campañas</h1><p>Acceso de lectura a todas las campañas, incluidas las archivadas. Puedes dejar correcciones y responder en publicaciones pendientes, pero no editar, publicar, archivar ni eliminar campañas.</p></div>';
+    h += '<div class="stats">' + [[ALL.length,'Total de campañas'],[pending.length,'Pendientes'],[published.length,'Publicadas'],[ALL.length - active.length,'Archivadas']].map(function(item){ return '<div class="stat"><b>' + item[0] + '</b><span>' + item[1] + '</span></div>'; }).join('') + '</div>';
+    h += '<div class="toolbar"><div class="sel" style="min-width:240px;flex:1 1 240px"><label for="boss-q">Buscar por título, referencia o fecha</label><input id="boss-q" type="search" value="' + esc(bossFilters.q) + '" placeholder="Buscar campaña…" autocomplete="off"></div>' +
+      select('boss-cat','Marca','boss:cat',bossFilters.cat,[['all','Todas']].concat(CAT_ORDER.map(function(c){return [c,CATS[c].name];}))) +
+      select('boss-status','Estado','boss:status',bossFilters.status,[['all','Todas, incluidas archivadas'],['pendiente','Pendientes'],['publicada','Publicadas'],['archivada','Archivadas']]) + '</div>';
+    h += '<div id="boss-table">' + bossTable() + '</div>';
+    h += '<section class="sec" style="margin-top:32px"><div class="sec-h"><h2>Tablón: todos los avisos</h2></div>';
+    if (hubNotesError) h += '<p class="note">No se han podido consultar los avisos: ' + esc(hubNotesError) + '</p>';
+    h += HUB_NOTES.length ? '<div class="hub-note-admin-list">' + HUB_NOTES.map(function(n){
+      return '<article class="hub-note-admin"><div><span class="note">' + (n.published ? 'PUBLICADO' : 'BORRADOR') + (n.pinned ? ' · FIJADO' : '') + ' · ' + esc(dateNice(n.created_at)) + '</span><h3>' + esc(n.title) + '</h3><p>' + esc(n.body) + '</p></div></article>';
+    }).join('') + '</div>' : '<p class="empty">No hay avisos disponibles.</p>';
+    h += '</section>';
+    return h;
+  }
+
   /* ---------- Búsqueda global ---------- */
   function searchPubs(q) {
     var toks = norm(q).split(/\s+/).filter(Boolean);
@@ -1711,7 +1753,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   function renderPub() {
     var gate = stateGate(); if (gate) return gate;
     var p = PUB_BY[route.id];
-    if (!p || (p.archived && authState !== 'admin')) return '<div class="empty"><b>No se encuentra esta publicación.</b><span>Puede haberse archivado o eliminado.</span><button type="button" class="btn" data-act="nav" data-r="directorio">Ir al directorio</button></div>';
+    if (!p || (p.archived && authState !== 'admin' && authState !== 'boss')) return '<div class="empty"><b>No se encuentra esta publicación.</b><span>Puede haberse archivado o eliminado.</span><button type="button" class="btn" data-act="nav" data-r="directorio">Ir al directorio</button></div>';
     if (gal.id !== p.id) gal = { id: p.id, idx: 0 };
     if (gal.idx >= p.nImg) gal.idx = 0;
     var trail = p.refDate ? [{ l: 'Directorio', k: 'root' }, { l: p.year, k: 'year' }, { l: CATS[p.cat].name, k: 'cat' }, { l: MONTHS[p.month], k: 'month' }, { l: gl(gk(p)), k: 'camp' }] : [{ l: 'Directorio', k: 'root' }];
@@ -2007,7 +2049,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       document.body.classList.add('login-mode');
       $('sidebar').hidden = true; $('main').innerHTML = renderAccessGate(); $('pagename').textContent = 'Acceso privado'; $('search-form').hidden = true; return;
     }
-    if ((route.name === 'proximamente' && !canSeeUpcoming()) || (isTourist() && isAdm(route.name))) { route = {name:'inicio',id:null}; try { history.replaceState(null,'',location.pathname+location.search+'#inicio'); } catch (_) {} }
+    if ((route.name === 'proximamente' && !canSeeUpcoming()) || (route.name === 'boss' && authState !== 'boss') || (isTourist() && isAdm(route.name))) { route = {name:'inicio',id:null}; try { history.replaceState(null,'',location.pathname+location.search+'#inicio'); } catch (_) {} }
     document.body.classList.remove('login-mode');
     $('sidebar').hidden = false; $('search-form').hidden = false;
     var html;
@@ -2015,6 +2057,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       case 'calendario': html = renderCalendar(); break;
       case 'directorio': html = renderDirectory(); break;
       case 'proximamente': html = renderUpcoming(); break;
+      case 'boss': html = renderBossOverview(); break;
       case 'catalogo': html = renderCatalog(); break;
       case 'buscar': html = renderSearch(); break;
       case 'pub': html = renderPub(); break;
@@ -2046,6 +2089,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     items.push(['catalogo', 'box', 'Catálogo']);
     var active = route.name === 'pub' ? (from && from.name !== 'buscar' ? from.name : '') : (isAdm(route.name) ? 'adm-resumen' : route.name);
     var h = items.map(function (i) { return '<button type="button" class="nav-i" data-act="nav" data-r="' + i[0] + '"' + (active === i[0] ? ' aria-current="page"' : '') + '>' + ic(i[1], 20) + '<span class="nav-label">'+esc(i[2])+'</span>' + '</button>'; }).join('') + '<button type="button" class="nav-i" data-act="focus-search">' + ic('search', 20) + 'Buscador</button>';
+    if (authState === 'boss') h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="nav" data-r="boss"' + (active === 'boss' ? ' aria-current="page"' : '') + '>' + ic('dir', 20) + 'Vista global BOSS</button>';
     if (authState === 'admin') h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="nav" data-r="adm-resumen"' + (active === 'adm-resumen' ? ' aria-current="page"' : '') + '>' + ic('admin', 20) + 'Administración</button><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + 'Cerrar sesión</button>'; else h += '<div class="nav-sep"></div><button type="button" class="nav-i" data-act="logout">' + ic('back',20) + (isTourist() ? 'Salir de visita' : 'Cerrar sesión') + '</button>';
     if (canAccessConnect()) h += '<div class="nav-sep"></div><a class="nav-i" href="./connect/" style="text-decoration:none">' + ic('dir',20) + 'FICOESA Connect ↗ <span class="connect-notification-dot" data-connect-notification hidden aria-label="Mensajes nuevos"></span></a>';
     if (canAccessTools()) h += '<a class="nav-i" href="./herramientas/" style="text-decoration:none">' + ic('box',20) + 'Caja de Herramientas ↗</a>';
@@ -2070,6 +2114,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     var latestIds=recentNovelties().map(function(p){return p.id;}).join('|');
     if(latestIds!==noveltyFeedKey){noveltyFeedKey=latestIds;noveltyIndex=0;}
     if (route.name === 'proximamente' && canSeeUpcoming()) loadUpcomingCounts();
+    if (route.name === 'boss' && document.activeElement && document.activeElement.id === 'boss-q') { if ($('boss-table')) $('boss-table').innerHTML = bossTable(); buildNav(); return; }
     if ((route.name === 'adm-nueva' || route.name === 'adm-editar') && F) { buildNav(); return; }   /* no pisar un formulario en curso */
     var ae = document.activeElement;
     if (ae && ae.id === 'adm-q') { if ($('adm-table')) $('adm-table').innerHTML = admTable(); buildNav(); return; }
@@ -2272,6 +2317,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     if (!k) return;
     var p = k.split(':');
     if (p[0] === 'up') { upcomingFilter[p[1]]=t.value; render(); return; }
+    if (p[0] === 'boss') { bossFilters[p[1]]=t.value; render(t.id); return; }
     if (p[0] === 'cal') cal.f[p[1]] = t.value;
     else if (p[0] === 'adm') { adm[p[1]] = t.value; render(t.id); return; }
     else if (p[1] === 'hideEmpty') dir.hideEmpty = t.checked;
@@ -2291,6 +2337,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     if (t.getAttribute && t.getAttribute('data-f')) fieldInput(t);
     else if (t.getAttribute && t.getAttribute('data-p')) postInput(t);
     else if (t.id === 'adm-q') { adm.q = t.value; if ($('adm-table')) $('adm-table').innerHTML = admTable(); }
+    else if (t.id === 'boss-q') { bossFilters.q = t.value; if ($('boss-table')) $('boss-table').innerHTML = bossTable(); }
   });
   document.addEventListener('submit', function (e) { if (e.target.id === 'camp-form') { e.preventDefault(); saveForm(); } });
   document.addEventListener('keydown', function (e) {
@@ -2432,8 +2479,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       var authors = Object.create(null);
       if (rows.length) {
         var authorResult = await window.FICOESA_BACKEND.client.rpc('ficoesa_autores_comentarios', {p_campaign_id: id});
-        if (authorResult.error) throw authorResult.error;
-        (authorResult.data || []).forEach(function(a) { authors[a.user_id] = a.email; });
+        if (authorResult.error) console.warn('Autores de correcciones no disponibles:', authorResult.error.message);
+        else (authorResult.data || []).forEach(function(a) { authors[a.user_id] = a.email; });
       }
       function item(c, nested) {
         var time = new Date(c.created_at).toLocaleString('es-ES');
