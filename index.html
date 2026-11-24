@@ -146,7 +146,7 @@
 <style id="connect-notifications-style">
 .connect-notification-dot {display:inline-block; flex:none; width:10px; height:10px; border-radius:50%; background:#ff6472; margin-left:auto; box-shadow:0 0 0 3px rgba(255,100,114,.13);}
 .connect-notification-dot[hidden] {display:none!important;}
-</style></head><body>
+</style></head><body class="aurora-page">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap">
@@ -2379,7 +2379,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   /* ---------- Acceso privado y whitelist ---------- */
   function renderAccessGate() {
     if (authState === 'checking') return '<div class="login-screen login-loading"><div class="login-brand"><div class="login-brand-mark"><strong>FICOESA</strong><span>CREATIVE HUB</span></div></div><p>Comprobando acceso privado…</p></div>';
-    return '<div class="login-screen">' +
+    return '<div class="login-screen"><div class="gate-art"><span class="brand-label">FICOESA / Creative Hub</span><strong class="gate-name">Directorio</strong><p>Campañas, calendario editorial y catálogo de WORKO y FORLI.</p><a class="return-home" href="./intro/">Volver a la intro</a></div>' +
       '<div class="login-brand"><div class="login-brand-mark"><strong>FICOESA</strong><span>CREATIVE HUB</span></div></div>' +
       '<section class="login-card" aria-label="Iniciar sesión en FICOESA Creative Hub">' +
       '<p class="login-kicker">Acceso exclusivo</p><h1 class="login-title">Bienvenido al directorio</h1>' +
@@ -2608,7 +2608,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   }
   async function startBackend() {
     var backend = window.FICOESA_BACKEND;
-    if (!backend || !backend.configured) { dbState = 'nodb'; authState = 'guest'; $('main').innerHTML = '<p class="empty">No se ha configurado Supabase. Revisa los archivos de conexión.</p>'; return; }
+    if (!backend || !backend.configured) { dbState = 'nodb'; authState = 'guest'; render(); const warning=$('auth-error'); if(warning)warning.textContent='El servicio de acceso no está disponible. Comprueba la conexión y recarga la página.'; $('auth-form')?.querySelector('button')?.setAttribute('disabled',''); document.querySelector('[data-act="tourist-enter"]')?.setAttribute('disabled',''); return; }
     try {
       authState = await backend.role();
       if (authState === 'guest') { try { if (sessionStorage.getItem('ficoesa_turista') === '1') authState = 'turista'; } catch (_) {} }
@@ -2729,6 +2729,6 @@ body.login-mode #fh-help-button,body.login-mode #fh-help-panel{display:none!impo
 .hub-backup-panel>div:first-child{display:grid;gap:5px}.hub-backup-panel strong{font-size:14px}.hub-backup-panel span{color:#c7c7c7;font-size:12px;line-height:1.5}.hub-backup-buttons{display:flex;gap:9px;flex-wrap:wrap}
 .hub-install-dialog{background:#2b2e2b;color:#f8f8f5;border:1px solid #71756c;border-radius:15px;position:relative;max-width:min(510px,calc(100vw - 40px));margin:auto;padding:28px;z-index:2;line-height:1.7;box-shadow:0 22px 65px #0009}.hub-install-dialog h2{margin:0 0 12px;font-size:22px}.hub-install-dialog p{font-size:13px;color:#deded7}.hub-install-dialog .btn{margin-top:9px}
 @media(prefers-reduced-motion:reduce){.page-enter *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
-</style>
+</style><link rel="stylesheet" href="./aurora.css">
 <script src="./pwa-register.js" defer></script>
 </body></html>

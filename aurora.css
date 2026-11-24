@@ -1,0 +1,58 @@
+/* Materiales compartidos por Directorio, Caja y Connect. */
+:root{--worko:#f6c118;--forli:#e9e229;--especial:#5ce1e6;--otros:#fff;--ink:#161511;--frost:#ebe5d6;--edge:#dbcca747;--radius:18px;--blur:14px;--glass:linear-gradient(140deg,#d4bd8426,#f3deab09 42%,#15110945),#292720ed;--rim:inset 0 1px 0 #f4f5db3b,0 12px 32px #100c0327;--mesh:radial-gradient(ellipse at 95% 3%,#76591d 0,transparent 42%),radial-gradient(ellipse at 18% 85%,#57451a 0,transparent 43%),linear-gradient(118deg,#12120f,#211f18 65%,#373020);--color-primary:var(--worko);--color-accent:var(--forli);--accent:var(--worko);--line:var(--edge);--surface-1:#2b2923;--surface-2:#39352b;--bg:var(--ink)}
+html body{background:var(--mesh) fixed;color:#f5f6f2}
+body .app{background:transparent}
+body :is(.login-card,.login,.panel,.modal,.hub-hero,.category-feature,.resource-card,.folder-tile,.camp-card,.year-card,.month-card,.media-card,.pcard,.asset-carousel,.sections-panel,.admin-management,.tool-search,.profile-card){background:var(--glass);border:1px solid var(--edge);border-radius:var(--radius);box-shadow:var(--rim)}
+body :is(.login-title,.login h1,.login-card h1,.page-h h1,.hub-hero h1,.resource-heading h2){font-weight:550;letter-spacing:-.055em;text-wrap:balance}
+body :is(.login-card,.login){border-top-color:#dac9a1;padding:clamp(22px,4vw,44px)}
+body .login-card:before{display:none}
+body :is(.login-brand-mark span,.hub-eyebrow,.kicker,.section-label,.eyebrow){color:#f1d49e}
+body :is(.btn,.nav-i,.back,.menu-btn,.nav-back-btn,.room){border-radius:12px}
+body :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea){border-radius:10px}
+body :is(.sidebar,.topbar,.head){background:#211f1bf7;border-color:var(--edge)}
+body .sidebar .nav-i[aria-current=page],body .room.active{background:#cfba7620;border-color:var(--worko)}
+body :is(.category-feature,.folder-tile,.resource-card,.camp-card):hover{border-color:#e4c876}
+body .hub-hero{background:radial-gradient(ellipse at 94% 2%,#976e3959,transparent 48%),var(--glass)}
+body .cell.today .dnum{border:1px solid var(--worko);border-radius:6px;padding-inline:4px;color:#fff}
+body .cal-grid{border-radius:14px;overflow:hidden}body .cell.off{background:#21201c}
+body .c-worko{color:var(--worko)}body .c-forli{color:var(--forli)}body .c-festivos{color:var(--especial)}body .c-otros{color:var(--otros)}
+body .msgs{background:radial-gradient(ellipse at 100% 100%,#79632d44,transparent 62%)}
+body :focus-visible{outline:3px solid #ffe29c;outline-offset:3px}
+body .return-home{display:block;text-align:center;color:#e2dccc;padding:12px;font-size:14px}
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){body :is(.topbar,.head){background:#25221be6;-webkit-backdrop-filter:blur(var(--blur));backdrop-filter:blur(var(--blur))}}
+@media(min-width:1000px){body .page-h h1{font-size:clamp(36px,4vw,70px)}body .hub-hero{padding:clamp(32px,5vw,80px)}body .nav-i{padding-block:12px}body .content main{max-width:1700px;margin-inline:auto}}
+@media(max-width:700px){html body{background-attachment:scroll}body .hub-hero{padding:22px}body .topbar{backdrop-filter:none}body .btn:not(.sm){min-height:44px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* El reflector amarillo pertenece a las páginas interiores. */
+html body.aurora-page,html body.aurora-page:not(.chat-open){background:radial-gradient(ellipse at 84% -10%,#9b742caa,transparent 51%),var(--mesh);background-attachment:fixed}
+body.aurora-page .login-screen,body .gate-layout{position:relative;isolation:isolate}
+.gate-layout,.login-screen:not(.login-loading){width:min(1200px,100%);max-width:1200px;margin:auto;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.85fr);gap:clamp(24px,5vw,80px);align-items:center}
+.gate-art{position:relative;isolation:isolate;padding:32px 0 110px;align-self:center}
+.gate-art:before{content:"";position:absolute;z-index:-1;inset:-70% -10% -65% -12%;pointer-events:none;background:url("aurora-gold.svg") center top/120% auto no-repeat;opacity:.8;mask-image:linear-gradient(to bottom,#000 0%,#000 44%,transparent 82%)}
+.gate-art .brand-label{font-size:12px;text-transform:uppercase;font-weight:700;letter-spacing:.16em;color:#f6d675}
+.gate-art h1,.gate-art .gate-name{display:block;font-size:clamp(46px,5.6vw,90px);font-weight:550;line-height:1.02;letter-spacing:-.07em;margin:22px 0 18px;color:#faf7ed;text-wrap:balance}
+.gate-art p{color:#e4decd;font-size:clamp(16px,1.4vw,20px);max-width:39ch;line-height:1.6}
+.gate-art .return-home{display:inline-block;padding:24px 0;text-underline-offset:5px}
+body .login-screen .login-footer{grid-column:1/-1;margin:0;text-align:left;border-top:1px solid var(--edge);padding:16px 0}
+body .login-screen:not(.login-loading) .login-brand{display:none}
+body .gate-layout .login,body .gate-layout .login-card{width:100%;max-width:none;margin:0}
+body.aurora-connect:not(.chat-open){padding:clamp(20px,5vw,90px);overflow-x:clip}
+body.aurora-connect .gate-layout:has(.login.hidden){display:none}
+body .login-card,body .login{background:linear-gradient(147deg,#494538f5,#292720f5 38%,#201e19f5);box-shadow:inset 0 1px 1px #fff4,0 30px 80px #09070450}
+body .login input,body .login-card input:not([type=submit]){background:#1c1b18;color:white;border:1px solid #756e5d}
+body .btn.primary{background:linear-gradient(115deg,#ffe285,#f6c118 72%);color:#201a0c;border-color:#f3cc4f}
+body .btn.primary:hover{background:#ffe18a}
+body :is(.filters,.cal-top,.tool-search,.admin-management,.composer,.channel-modal){background:linear-gradient(135deg,#38352cf5,#23221df5);border:1px solid var(--edge);border-radius:16px;padding:clamp(12px,1.5vw,24px)}
+body .page-h,body .hub-hero{position:relative;isolation:isolate;overflow:hidden;background:url("aurora-gold.svg") right -110px top -55px / min(55%,750px) auto no-repeat,linear-gradient(115deg,#24231f 24%,#393222 70%,#4e4025);padding:clamp(22px,3.4vw,58px);border:1px solid var(--edge);border-radius:20px}
+body .page-h h1,body .hub-hero h1{text-shadow:0 2px 14px #19160f}
+body .cal-head{background:#302d23;border-radius:12px 12px 0 0}body .cal-grid{border-radius:0 0 14px 14px}
+body .category-feature .cat-symbol{box-shadow:inset 0 1px 2px #fff9,0 10px 25px #100d0655}
+body .msgs{background:radial-gradient(ellipse at 90% 2%,#775d292d,transparent 60%),#211f1a}
+body .msg.mine{background:#3c3422;border-color:#877042}body .msg:not(.mine){background:#2f2d27;border-color:#555043}
+body .composer textarea,body .search input{background:#1d1c18}
+body .resource-heading,body .resource-detail{border-color:var(--edge)}
+@media(min-width:900px){body .topbar{margin-top:12px;top:8px;border:1px solid var(--edge);border-radius:15px;margin-inline:0;padding-inline:20px}body .gate-layout .login-card h1,body .login h1{font-size:clamp(27px,3vw,40px)}}
+@media(max-width:760px){.gate-layout,.login-screen:not(.login-loading){grid-template-columns:minmax(0,1fr);gap:18px;max-width:530px}.gate-art{padding:18px 0 0}.gate-art:before{inset:-38px -10px 0 35%;background-size:180% auto;opacity:.5}.gate-art .gate-name,.gate-art h1{font-size:42px;margin:12px 0}.gate-art p{font-size:15px}.gate-art .return-home{padding:12px 0}body .page-h,body .hub-hero{background-size:64% auto,auto}body.aurora-page{background-attachment:scroll}body.aurora-connect:not(.chat-open){display:block}body .login-shell{padding-block:20px}}
+body.chat-open #connect-gate{display:none}
+body .login-help,body .login .notice,body .login-card p,body .gate-art p{color:#e2ddce}
