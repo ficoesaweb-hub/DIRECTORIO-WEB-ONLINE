@@ -839,7 +839,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   var dbState = 'loading';           /* loading | ready | nodb | error */
   var authState = 'checking';        /* checking | admin | visitante | viewer | comenter | worker | boss | turista (sin sesión) */
   var HUB_NOTES = [], hubNotesError = '', noveltyIndex = 0, touristTimer = null;
-  var noveltyTimer = null, noveltyPaused = false, noveltyHoverPause = false, noveltyTrackIndex = 1, noveltyFeedKey = '';
+  var noveltyTimer = null, noveltyPaused = window.matchMedia('(prefers-reduced-motion: reduce)').matches, noveltyFeedKey = '';
   var touristLoadError = '';
   var CAMPAIGNS = [], ALL = [], PUBS = [], POSTS = [], PUB_BY = {}, hasDemo = false;
 
@@ -1021,7 +1021,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     return '<div class="sel"><label for="' + id + '">' + label + '</label><select id="' + id + '" data-filter="' + key + '">' +
       opts.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(value) ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select></div>';
   }
-  function pubGrid(list, small) { return list.length ? '<div class="grid' + (small ? ' sm' : '') + '">' + list.map(pcard).join('') + '</div>' : '<p class="empty">No hay publicaciones que mostrar.</p>'; }
+  function pubGrid(list, small) { return list.length ? '<div class="grid publication-grid' + (small ? ' sm' : '') + '">' + list.map(pcard).join('') + '</div>' : '<p class="empty">No hay publicaciones que mostrar.</p>'; }
   function pubList(list) {
     var h = '<div class="list-wrap"><div class="list-inner list"><div class="lh"><span></span><span>Referencia</span><span>Título</span><span>Grupo</span><span>Fecha</span><span>Marca</span><span>Imág.</span><span>Estado</span></div>';
     list.forEach(function (p) {
@@ -1053,94 +1053,57 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
         return bv.localeCompare(av) || String(b.addedAt||'').localeCompare(String(a.addedAt||'')) || String(b.id).localeCompare(String(a.id));
       }).slice(0,3);
   }
-  function noveltyCard(p, i, clone) {
-    var img=cover(p);
-    var coverHtml=img?'<img loading="lazy" src="'+esc(img)+'" alt="Portada de '+esc(p.title)+'">':'<span class="hub-news-no-image" aria-hidden="true">FICOESA CREATIVE HUB</span>';
-    return '<button type="button" class="hub-news-card" data-act="open-pub" data-id="'+esc(p.id)+'" data-slide-index="'+i+'" tabindex="-1" aria-hidden="true">'+
-      '<div class="hub-news-cover">'+coverHtml+'<span class="hub-news-number">NOVEDAD 0'+(i+1)+' / 0'+Math.min(3,recentNovelties().length)+'</span></div>'+
-      '<div class="hub-news-info">'+catTag(p.cat)+'<h3>'+esc(p.title)+'</h3><p class="hub-news-ref">'+esc(p.ref)+' · '+esc(fmtShort(p.real||p.refDate||p.addedAt))+'</p><span class="hub-news-cta">VER PUBLICACIÓN →</span></div></button>';
+  function noveltyCard(p, i, total) {
+    const img = esc(cover(p));
+    const active = i === noveltyIndex;
+    const photo = img ? '<img class="news-ambient" src="'+img+'" alt="" aria-hidden="true"><img class="news-poster" src="'+img+'" decoding="async" alt="Portada de '+esc(p.title)+'">' : '<span class="hub-news-no-image">FICOESA Creative Hub</span>';
+    return '<button type="button" class="hub-news-card" data-act="open-pub" data-id="'+esc(p.id)+'" tabindex="'+(active?0:-1)+'" aria-hidden="'+!active+'">'+
+      '<div class="hub-news-cover">'+photo+'</div><div class="hub-news-info">'+catTag(p.cat)+
+      '<h3>'+esc(p.title)+'</h3><p class="hub-news-ref">'+esc([p.ref,fmtShort(p.real||p.refDate||p.addedAt)].filter(Boolean).join(' · '))+'</p>'+
+      '<span class="hub-news-cta">Ver publicación</span><span class="news-folio">'+String(i+1).padStart(2,'0')+' / '+String(total).padStart(2,'0')+'</span></div></button>';
   }
   function renderNovelties() {
-    var items=recentNovelties(), total=items.length;
-    var h='<section class="sec hub-news" aria-label="Novedades de Creative Hub"><div class="sec-h"><div><p class="eyebrow">ACTUALIDAD · WORKO / FORLI</p><h2>Últimas novedades</h2></div><span class="note">Las 3 publicaciones más recientes</span></div>';
-    if(dbState==='loading') return h+'<p class="note">Las novedades aparecerán cuando estén disponibles. Puedes seguir navegando.</p></section>';
-    if(dbState==='error') return h+'<p class="empty">Las novedades estarán disponibles cuando se restablezca la lectura de campañas.</p></section>';
-    if(!total) return h+'<p class="empty">Las últimas publicaciones aparecerán aquí.</p></section>';
-    noveltyIndex=((noveltyIndex%total)+total)%total;
-    // Copias en los extremos para que el avance 3 -> 1 sea continuo y sin saltos.
-    var slides=total>1?[{p:items[total-1],i:total-1,clone:true}].concat(items.map(function(p,i){return {p:p,i:i,clone:false};}),[{p:items[0],i:0,clone:true}]):[{p:items[0],i:0,clone:false}];
-    noveltyTrackIndex=total>1?noveltyIndex+1:0;
-    h+='<div class="hub-carousel-wrap"><button class="hub-carousel-arrow" type="button" data-act="novelty-prev" aria-label="Campaña anterior"'+(total===1?' disabled':'')+'>‹</button>';
-    h+='<div class="hub-carousel" role="region" aria-roledescription="carrusel" aria-label="Últimas tres publicaciones"><div class="hub-carousel-track" style="transform:translateX(-'+(noveltyTrackIndex*100)+'%)">';
-    h+=slides.map(function(x){return noveltyCard(x.p,x.i,x.clone);}).join('');
-    h+='</div></div><button class="hub-carousel-arrow" type="button" data-act="novelty-next" aria-label="Campaña siguiente"'+(total===1?' disabled':'')+'>›</button></div>';
+    const items=recentNovelties(), total=items.length;
+    let h='<section class="sec hub-news" aria-label="Novedades de Creative Hub"><div class="sec-h"><div><p class="eyebrow">Actualidad · WORKO / FORLI</p><h2>Últimas novedades</h2></div></div>';
+    if(dbState==='loading')return h+'<p class="note">Cargando las publicaciones…</p></section>';
+    if(dbState==='error')return h+'<p class="empty">Las novedades estarán disponibles cuando se restablezca la conexión.</p></section>';
+    if(!total)return h+'<p class="empty">Las últimas publicaciones aparecerán aquí.</p></section>';
+    noveltyIndex=noveltyIndex%total;
+    h+='<div class="hub-carousel" role="region" aria-roledescription="carrusel" aria-label="Publicaciones recientes"><div class="hub-carousel-track">'+items.map((p,i)=>noveltyCard(p,i,total)).join('')+'</div></div>';
     if(total>1){
-      h+='<div class="hub-news-controls"><span class="hub-autoplay-hint">Cambio automático cada 8 segundos</span><div class="hub-dots" role="group" aria-label="Seleccionar campaña">';
-      h+=items.map(function(_,i){return '<button type="button" class="hub-dot '+(i===noveltyIndex?'on':'')+'" data-act="novelty-go" data-i="'+i+'" aria-label="Ver novedad '+(i+1)+' de '+total+'" aria-pressed="'+(i===noveltyIndex)+'"></button>';}).join('');
-      h+='</div><button type="button" class="hub-autoplay" data-act="novelty-pause" aria-pressed="'+noveltyPaused+'">'+(noveltyPaused?'▶ Reanudar':'Ⅱ Pausar')+'</button></div>';
+      h+='<div class="hub-news-controls"><button type="button" class="hub-carousel-arrow" data-act="novelty-prev" aria-label="Campaña anterior">‹</button><div class="hub-dots" role="group" aria-label="Seleccionar campaña">';
+      h+=items.map((_,i)=>'<button type="button" class="hub-dot '+(i===noveltyIndex?'on':'')+'" data-act="novelty-go" data-i="'+i+'" aria-label="Ver novedad '+(i+1)+' de '+total+'" aria-pressed="'+(i===noveltyIndex)+'"></button>').join('');
+      h+='</div><button type="button" class="hub-carousel-arrow" data-act="novelty-next" aria-label="Campaña siguiente">›</button><button type="button" class="hub-autoplay" data-act="novelty-pause" aria-pressed="'+noveltyPaused+'">'+(noveltyPaused?'Reanudar':'Pausar')+'</button></div>';
     }
     return h+'</section>';
   }
-  function stopNoveltyAutoplay(){if(noveltyTimer){clearInterval(noveltyTimer);noveltyTimer=null;}}
-  function noveltyMayAdvance(){
-    return route.name==='inicio' && !document.hidden && !noveltyPaused && !noveltyHoverPause &&
-      !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) && recentNovelties().length>1;
+  function stopNoveltyAutoplay(){
+    clearInterval(noveltyTimer);
+    noveltyTimer=null;
   }
   function startNoveltyAutoplay(){
-    stopNoveltyAutoplay();
-    if(noveltyMayAdvance()) noveltyTimer=setInterval(function(){if(noveltyMayAdvance())moveNovelty(1,false);},8000);
-  }
-  function updateNoveltySlide(animate){
-    var track=document.querySelector('.hub-carousel-track');if(!track)return;
-    if(animate===false)track.style.transition='none';else track.style.transition='';
-    track.style.transform='translateX(-'+(noveltyTrackIndex*100)+'%)';
-    var activePosition=noveltyTrackIndex;
-    Array.prototype.forEach.call(track.children,function(slide,i){
-      var on=i===activePosition;slide.tabIndex=on?0:-1;slide.setAttribute('aria-hidden',on?'false':'true');
-    });
-    Array.prototype.forEach.call(document.querySelectorAll('.hub-dot'),function(dot,i){
-      var on=i===noveltyIndex;dot.classList.toggle('on',on);dot.setAttribute('aria-pressed',on?'true':'false');
-    });
-  }
-  function normalizeNoveltyTrack(){
-    var total=recentNovelties().length;
-    if(total<=1)return;
-    if(noveltyTrackIndex===0)noveltyTrackIndex=total;
-    else if(noveltyTrackIndex===total+1)noveltyTrackIndex=1;
-    else return;
-    updateNoveltySlide(false);
-    // Restaurar la transicion tras el salto invisible a la copia original.
-    var track=document.querySelector('.hub-carousel-track');if(track){void track.offsetWidth;track.style.transition='';}
+    if(route.name!=='inicio'||document.hidden||noveltyPaused||document.querySelectorAll('.hub-news-card').length<2){
+      stopNoveltyAutoplay();return;
+    }
+    if(noveltyTimer===null)noveltyTimer=setInterval(function(){
+      if(!document.querySelector('.hub-news-card:focus'))moveNovelty(1,false);
+    },8000);
   }
   function setNoveltyIndex(target,manual){
-    var total=recentNovelties().length;if(!total)return;
-    target=((target%total)+total)%total;
-    var previous=noveltyIndex;
-    if(total>1 && previous===total-1 && target===0)noveltyTrackIndex=total+1;
-    else if(total>1 && previous===0 && target===total-1)noveltyTrackIndex=0;
-    else noveltyTrackIndex=total>1?target+1:0;
-    noveltyIndex=target;
-    updateNoveltySlide(true);
-    if(manual)startNoveltyAutoplay();
+    const slides=document.querySelectorAll('.hub-news-card'),total=slides.length;
+    if(!total)return;
+    noveltyIndex=((target%total)+total)%total;
+    slides.forEach(function(slide,i){
+      const active=i===noveltyIndex;
+      slide.tabIndex=active?0:-1;slide.setAttribute('aria-hidden',String(!active));
+    });
+    document.querySelectorAll('.hub-dot').forEach(function(dot,i){
+      dot.classList.toggle('on',i===noveltyIndex);dot.setAttribute('aria-pressed',String(i===noveltyIndex));
+    });
+    if(manual){stopNoveltyAutoplay();startNoveltyAutoplay();}
   }
   function moveNovelty(delta,manual){setNoveltyIndex(noveltyIndex+delta,manual);}
-  function syncNoveltyAutoplay(){
-    stopNoveltyAutoplay();
-    if(route.name!=='inicio')return;
-    var track=document.querySelector('.hub-carousel-track');
-    if(!track)return;
-    updateNoveltySlide(false);
-    void track.offsetWidth; track.style.transition='';
-    track.addEventListener('transitionend',function(e){if(e.target===track && e.propertyName==='transform')normalizeNoveltyTrack();});
-    var area=document.querySelector('.hub-news');
-    if(area){
-      area.addEventListener('pointerenter',function(){noveltyHoverPause=true;stopNoveltyAutoplay();});
-      area.addEventListener('pointerleave',function(){noveltyHoverPause=false;startNoveltyAutoplay();});
-      area.addEventListener('focusin',function(){noveltyHoverPause=true;stopNoveltyAutoplay();});
-      area.addEventListener('focusout',function(e){if(!area.contains(e.relatedTarget)){noveltyHoverPause=false;startNoveltyAutoplay();}});
-    }
-    startNoveltyAutoplay();
-  }
+  function syncNoveltyAutoplay(){startNoveltyAutoplay();}
   function dateNice(value) { try { return value ? new Date(value).toLocaleDateString('es-ES', {day:'2-digit',month:'short',year:'numeric'}) : ''; } catch(e){ return ''; } }
   function publishedNotes() {
     return HUB_NOTES.filter(function(x){return x.published;}).sort(function(a,b){return Number(!!b.pinned)-Number(!!a.pinned) || String(b.created_at).localeCompare(String(a.created_at));});
@@ -2223,7 +2186,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
       case 'novelty-prev': moveNovelty(-1,true); break;
       case 'novelty-next': moveNovelty(1,true); break;
       case 'novelty-go': setNoveltyIndex(Number(d.i) || 0,true); break;
-      case 'novelty-pause': noveltyPaused=!noveltyPaused; var pb=document.querySelector('.hub-autoplay');if(pb){pb.textContent=noveltyPaused?'▶ Reanudar':'Ⅱ Pausar';pb.setAttribute('aria-pressed',noveltyPaused?'true':'false');}startNoveltyAutoplay(); break;
+      case 'novelty-pause': noveltyPaused=!noveltyPaused; var pb=document.querySelector('.hub-autoplay');if(pb){pb.textContent=noveltyPaused?'Reanudar':'Pausar';pb.setAttribute('aria-pressed',noveltyPaused?'true':'false');}startNoveltyAutoplay(); break;
       case 'tourist-retry': if(isTourist()){dbState='loading';touristLoadError='';render();fetchTouristFeed(snapshotToken);}break;
       case 'hub-note-save': hubSaveNote(); break;
       case 'hub-note-edit': hubEditNote(d.id); break;

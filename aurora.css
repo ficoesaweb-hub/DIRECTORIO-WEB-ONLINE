@@ -56,3 +56,29 @@ body .resource-heading,body .resource-detail{border-color:var(--edge)}
 @media(max-width:760px){.gate-layout,.login-screen:not(.login-loading){grid-template-columns:minmax(0,1fr);gap:18px;max-width:530px}.gate-art{padding:18px 0 0}.gate-art:before{inset:-38px -10px 0 35%;background-size:180% auto;opacity:.5}.gate-art .gate-name,.gate-art h1{font-size:42px;margin:12px 0}.gate-art p{font-size:15px}.gate-art .return-home{padding:12px 0}body .page-h,body .hub-hero{background-size:64% auto,auto}body.aurora-page{background-attachment:scroll}body.aurora-connect:not(.chat-open){display:block}body .login-shell{padding-block:20px}}
 body.chat-open #connect-gate{display:none}
 body .login-help,body .login .notice,body .login-card p,body .gate-art p{color:#e2ddce}
+/* El cartel completo ocupa el primer plano; su color ilumina el paspartú. */
+body .hub-news{width:100%;max-width:1450px;margin:28px auto 48px}
+body .hub-news .sec-h,body .hub-news .hub-carousel,body .hub-news-controls{max-width:none;width:100%}
+body .hub-news .hub-carousel{border-radius:20px;background:#1a1916}
+body .hub-carousel-track{display:grid;transform:none;transition:none}
+body .hub-news-card{grid-area:1/1;display:grid;grid-template-columns:minmax(0,2fr) minmax(230px,1fr);width:100%;height:auto;min-width:0;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .65s ease,visibility 0s .65s;background:linear-gradient(130deg,#302d24,#191917)}
+body .hub-news-card[aria-hidden=false]{opacity:1;visibility:visible;pointer-events:auto;z-index:1;transition-delay:0s}
+body .hub-news-cover{height:clamp(330px,55vh,625px);width:100%;padding:0;position:relative;isolation:isolate;background:#211f19}
+body .hub-news-cover .news-ambient{position:absolute;inset:-5%;width:110%;height:110%;object-fit:cover;filter:blur(14px) brightness(.48);pointer-events:none}
+body .hub-news-cover .news-poster{position:relative;object-fit:contain;width:100%;height:100%;padding:10px;filter:drop-shadow(0 8px 18px #0006)}
+body .hub-news-info{padding:clamp(18px,2.5vw,44px);justify-content:center;position:relative}
+body .hub-news-info h3{font-size:clamp(1.22rem,1.85vw,2.15rem);font-weight:600;line-height:1.16;letter-spacing:-.025em;text-wrap:pretty;overflow-wrap:break-word;margin:14px 0}
+body .hub-news-info .hub-news-cta{border:1px solid #d7b957;color:#ffdd7b;background:transparent;border-radius:24px;padding:9px 15px;text-transform:none;letter-spacing:0}
+.news-folio{font:500 .75rem/1.3 monospace;letter-spacing:.09em;color:#dfce9c;margin-top:28px}
+body .hub-news-controls{display:flex;justify-content:flex-start;gap:12px;margin:10px 0 0}
+body .hub-news-controls .hub-autoplay{margin-left:auto;min-width:80px;height:40px}
+body .hub-news-controls .hub-carousel-arrow{position:static;display:grid;place-items:center;transform:none;width:40px;height:40px;flex:0 0 40px;border-radius:50%;padding:0}
+body .publication-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:clamp(14px,1.4vw,24px)}
+body .pcard{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;overflow:hidden;text-align:left;padding:0}
+body .pcard .pc-img{width:100%;aspect-ratio:4/5;flex:none;border-radius:0}
+body .pcard .pc-b{display:flex;flex:1;flex-direction:column;align-items:flex-start;gap:8px;padding:14px 15px 16px}
+body .pcard .pc-t{font-size:clamp(.96rem,1.05vw,1.12rem);line-height:1.32;font-weight:600;letter-spacing:-.012em;text-wrap:pretty;overflow-wrap:anywhere}
+body .pcard .pc-m{margin-top:auto;padding-top:3px;font-size:.82rem;line-height:1.45;color:#c9c4b6}
+body .pcard .pc-st,body .pcard .pc-n{border-radius:5px;color:#fff;background:#191814e8}
+@media(max-width:740px){body .hub-news-card{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}body .hub-news-cover{height:clamp(260px,88vw,440px);min-height:0}body .hub-news-info{padding:18px 20px}body .hub-news-info h3{margin:8px 0;font-size:1.25rem}body .hub-news-info .hub-news-cta{margin-top:12px}.news-folio{position:absolute;right:20px;bottom:24px;margin:0}body .publication-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,153px),1fr));gap:12px}body .pcard .pc-b{padding:11px}}
+@media(prefers-reduced-motion:reduce){body .hub-news-card{transition:none}}
