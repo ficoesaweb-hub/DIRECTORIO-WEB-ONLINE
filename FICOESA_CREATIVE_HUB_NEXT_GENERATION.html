@@ -146,7 +146,7 @@
 <style id="connect-notifications-style">
 .connect-notification-dot {display:inline-block; flex:none; width:10px; height:10px; border-radius:50%; background:#ff6472; margin-left:auto; box-shadow:0 0 0 3px rgba(255,100,114,.13);}
 .connect-notification-dot[hidden] {display:none!important;}
-</style></head><body class="aurora-page">
+</style></head><body class="aurora-page directorio-aurora">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap">
@@ -1069,11 +1069,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     if(dbState==='error')return h+'<p class="empty">Las novedades estarán disponibles cuando se restablezca la conexión.</p></section>';
     if(!total)return h+'<p class="empty">Las últimas publicaciones aparecerán aquí.</p></section>';
     noveltyIndex=noveltyIndex%total;
-    h+='<div class="hub-carousel" role="region" aria-roledescription="carrusel" aria-label="Publicaciones recientes"><div class="hub-carousel-track">'+items.map((p,i)=>noveltyCard(p,i,total)).join('')+'</div></div>';
+    h+='<div class="hub-carousel-wrap"><button type="button" class="hub-carousel-arrow" data-act="novelty-prev" aria-label="Campaña anterior"'+(total===1?' disabled':'')+'>‹</button><div class="hub-carousel" role="region" aria-roledescription="carrusel" aria-label="Publicaciones recientes"><div class="hub-carousel-track" style="transform:translateX(-'+(noveltyIndex*100)+'%);">'+items.map((p,i)=>noveltyCard(p,i,total)).join('')+'</div></div><button type="button" class="hub-carousel-arrow" data-act="novelty-next" aria-label="Campaña siguiente"'+(total===1?' disabled':'')+'>›</button></div>';
     if(total>1){
-      h+='<div class="hub-news-controls"><button type="button" class="hub-carousel-arrow" data-act="novelty-prev" aria-label="Campaña anterior">‹</button><div class="hub-dots" role="group" aria-label="Seleccionar campaña">';
+      h+='<div class="hub-news-controls"><span class="hub-autoplay-hint">Rotación cada 8 segundos</span><div class="hub-dots" role="group" aria-label="Seleccionar campaña">';
       h+=items.map((_,i)=>'<button type="button" class="hub-dot '+(i===noveltyIndex?'on':'')+'" data-act="novelty-go" data-i="'+i+'" aria-label="Ver novedad '+(i+1)+' de '+total+'" aria-pressed="'+(i===noveltyIndex)+'"></button>').join('');
-      h+='</div><button type="button" class="hub-carousel-arrow" data-act="novelty-next" aria-label="Campaña siguiente">›</button><button type="button" class="hub-autoplay" data-act="novelty-pause" aria-pressed="'+noveltyPaused+'">'+(noveltyPaused?'Reanudar':'Pausar')+'</button></div>';
+      h+='</div><button type="button" class="hub-autoplay" data-act="novelty-pause" aria-pressed="'+noveltyPaused+'">'+(noveltyPaused?'Reanudar':'Pausar')+'</button></div>';
     }
     return h+'</section>';
   }
@@ -1093,6 +1093,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     const slides=document.querySelectorAll('.hub-news-card'),total=slides.length;
     if(!total)return;
     noveltyIndex=((target%total)+total)%total;
+    slides[0].parentElement.style.transform="translateX(-"+(100*noveltyIndex)+"%)";
     slides.forEach(function(slide,i){
       const active=i===noveltyIndex;
       slide.tabIndex=active?0:-1;slide.setAttribute('aria-hidden',String(!active));
@@ -1721,7 +1722,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     if (gal.idx >= p.nImg) gal.idx = 0;
     var trail = p.refDate ? [{ l: 'Directorio', k: 'root' }, { l: p.year, k: 'year' }, { l: CATS[p.cat].name, k: 'cat' }, { l: MONTHS[p.month], k: 'month' }, { l: gl(gk(p)), k: 'camp' }] : [{ l: 'Directorio', k: 'root' }];
     var h = crumbList(trail, p.ref);
-    h += '<div class="ficha"><div class="gal-wrap"><div class="gal-main"><button type="button" class="open" data-act="lb-open" aria-label="Ampliar imagen"><img id="gal-img" src="' + imgUrl(p, gal.idx) + '" alt="Imagen ' + (gal.idx + 1) + ' de ' + p.nImg + ' de ' + esc(p.title) + '"></button><span class="gal-zoom" aria-hidden="true">' + ic('zoom', 18) + '</span>' +
+    h += '<div class="ficha" data-campaign-category="' + esc(p.cat) + '"><div class="gal-wrap"><div class="gal-main"><button type="button" class="open" data-act="lb-open" aria-label="Ampliar imagen"><img id="gal-img" src="' + imgUrl(p, gal.idx) + '" alt="Imagen ' + (gal.idx + 1) + ' de ' + p.nImg + ' de ' + esc(p.title) + '"></button><span class="gal-zoom" aria-hidden="true">' + ic('zoom', 18) + '</span>' +
       (p.nImg > 1 ? '<button type="button" class="gal-nav prev" data-act="gal-prev" aria-label="Imagen anterior">' + ic('l', 18) + '</button><button type="button" class="gal-nav next" data-act="gal-next" aria-label="Imagen siguiente">' + ic('r', 18) + '</button><span class="gal-count" id="gal-count">' + (gal.idx + 1) + ' / ' + p.nImg + '</span>' : '') + '</div>';
     if (p.nImg > 1) {
       h += '<div class="thumbs" id="thumbs">';
@@ -2007,6 +2008,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
   var lastAnimatedRoute = null;
   function render(focusId) {
     if (!canEnter()) {
+      delete document.body.dataset.campaignTheme;
       stopNoveltyAutoplay();
       lastAnimatedRoute = null;
       document.body.classList.add('login-mode');
@@ -2038,6 +2040,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { box-shadow:0 0
     var isNewPage = lastAnimatedRoute !== routeToken;
     lastAnimatedRoute = routeToken;
     $('main').innerHTML = html;
+    const campaign = $('main').querySelector('.ficha[data-campaign-category]');
+    if (campaign) document.body.dataset.campaignTheme = campaign.dataset.campaignCategory;
+    else delete document.body.dataset.campaignTheme;
     syncNoveltyAutoplay();
     $('main').classList.toggle('page-enter', isNewPage);
     $('pagename').textContent = PAGES[route.name] || 'Inicio';
@@ -2692,6 +2697,6 @@ body.login-mode #fh-help-button,body.login-mode #fh-help-panel{display:none!impo
 .hub-backup-panel>div:first-child{display:grid;gap:5px}.hub-backup-panel strong{font-size:14px}.hub-backup-panel span{color:#c7c7c7;font-size:12px;line-height:1.5}.hub-backup-buttons{display:flex;gap:9px;flex-wrap:wrap}
 .hub-install-dialog{background:#2b2e2b;color:#f8f8f5;border:1px solid #71756c;border-radius:15px;position:relative;max-width:min(510px,calc(100vw - 40px));margin:auto;padding:28px;z-index:2;line-height:1.7;box-shadow:0 22px 65px #0009}.hub-install-dialog h2{margin:0 0 12px;font-size:22px}.hub-install-dialog p{font-size:13px;color:#deded7}.hub-install-dialog .btn{margin-top:9px}
 @media(prefers-reduced-motion:reduce){.page-enter *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
-</style><link rel="stylesheet" href="./aurora.css">
+</style><link rel="stylesheet" href="./aurora.css?v=campana-4">
 <script src="./pwa-register.js" defer></script>
 </body></html>

@@ -60,9 +60,9 @@ body .login-help,body .login .notice,body .login-card p,body .gate-art p{color:#
 body .hub-news{width:100%;max-width:1450px;margin:28px auto 48px}
 body .hub-news .sec-h,body .hub-news .hub-carousel,body .hub-news-controls{max-width:none;width:100%}
 body .hub-news .hub-carousel{border-radius:20px;background:#1a1916}
-body .hub-carousel-track{display:grid;transform:none;transition:none}
-body .hub-news-card{grid-area:1/1;display:grid;grid-template-columns:minmax(0,2fr) minmax(230px,1fr);width:100%;height:auto;min-width:0;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .65s ease,visibility 0s .65s;background:linear-gradient(130deg,#302d24,#191917)}
-body .hub-news-card[aria-hidden=false]{opacity:1;visibility:visible;pointer-events:auto;z-index:1;transition-delay:0s}
+body .hub-carousel-track{display:flex;width:100%;transition:transform .55s cubic-bezier(.22,.74,.2,1)}
+body .hub-news-card{flex:0 0 100%;display:grid;grid-template-columns:minmax(0,2fr) minmax(230px,1fr);width:100%;height:auto;min-width:0;background:linear-gradient(130deg,#302d24,#191917)}
+body .hub-news-card[aria-hidden=true]{pointer-events:none}
 body .hub-news-cover{height:clamp(330px,55vh,625px);width:100%;padding:0;position:relative;isolation:isolate;background:#211f19}
 body .hub-news-cover .news-ambient{position:absolute;inset:-5%;width:110%;height:110%;object-fit:cover;filter:blur(14px) brightness(.48);pointer-events:none}
 body .hub-news-cover .news-poster{position:relative;object-fit:contain;width:100%;height:100%;padding:10px;filter:drop-shadow(0 8px 18px #0006)}
@@ -82,3 +82,37 @@ body .pcard .pc-m{margin-top:auto;padding-top:3px;font-size:.82rem;line-height:1
 body .pcard .pc-st,body .pcard .pc-n{border-radius:5px;color:#fff;background:#191814e8}
 @media(max-width:740px){body .hub-news-card{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}body .hub-news-cover{height:clamp(260px,88vw,440px);min-height:0}body .hub-news-info{padding:18px 20px}body .hub-news-info h3{margin:8px 0;font-size:1.25rem}body .hub-news-info .hub-news-cta{margin-top:12px}.news-folio{position:absolute;right:20px;bottom:24px;margin:0}body .publication-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,153px),1fr));gap:12px}body .pcard .pc-b{padding:11px}}
 @media(prefers-reduced-motion:reduce){body .hub-news-card{transition:none}}
+
+body .hub-carousel-wrap{width:100%;max-width:none}body .hub-carousel-wrap>.hub-carousel-arrow{display:grid;place-items:center;text-align:center;padding:0}body .hub-news-controls{justify-content:center}body .hub-autoplay-hint{margin-right:auto}@media(prefers-reduced-motion:reduce){body .hub-carousel-track{transition:none}}
+
+/* El color se anima en el body persistente, incluso cuando cambia el contenido. */
+@property --campaign-light {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #f6c118;
+}
+body.directorio-aurora {
+  --campaign-light: #f6c118;
+  --color-primary: var(--campaign-light);
+  transition: --campaign-light 450ms ease-in-out;
+}
+body.directorio-aurora[data-campaign-theme="forli"] { --campaign-light: #e9e229; }
+body.directorio-aurora[data-campaign-theme="festivos"] { --campaign-light: #679ed1; }
+@supports (color: color-mix(in srgb, red, black)) {
+  html body.directorio-aurora.aurora-page:not(.chat-open) {
+    background-image: radial-gradient(ellipse at 84% -10%, color-mix(in srgb,var(--campaign-light) 53%,transparent), transparent 52%),
+      radial-gradient(ellipse at 18% 85%, color-mix(in srgb,var(--campaign-light) 24%,#181713), transparent 48%),
+      linear-gradient(118deg,#12120f,#211f1c 65%,color-mix(in srgb,var(--campaign-light) 15%,#242320));
+  }
+  .directorio-aurora .topbar, .directorio-aurora .ficha .gal-main {
+    border:1px solid color-mix(in srgb,var(--campaign-light) 36%,#494743);
+  }
+  .directorio-aurora .ficha .btn.primary {
+    background: linear-gradient(115deg,color-mix(in srgb,var(--campaign-light) 68%,white),var(--campaign-light));
+    border-color:var(--campaign-light);color:#191713;
+  }
+}
+.directorio-aurora .ficha :is(.ref,.tag), .directorio-aurora .ficha .thumbs button[aria-current=true] {border-color:var(--campaign-light)}
+.directorio-aurora .ficha .tag{color:var(--campaign-light)}
+.directorio-aurora[data-campaign-theme=otros] .ficha .tag{color:white}
+@media(prefers-reduced-motion:reduce){body.directorio-aurora{transition:none}}
